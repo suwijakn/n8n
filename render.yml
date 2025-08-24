@@ -15,11 +15,11 @@ services:
         value: https
       # Replace with your actual Render URL once created (or leave a placeholder and update after first deploy)
       - key: N8N_HOST
-        value: your-service-name.onrender.com
+        value: n8n-bqay.onrender.com
       - key: WEBHOOK_URL
-        value: https://your-service-name.onrender.com/
+        value: https://n8n-bqay.onrender.com/
       - key: N8N_EDITOR_BASE_URL
-        value: https://your-service-name.onrender.com/
+        value: https://n8n-bqay.onrender.com/
       # Security: generate once and keep; changing it invalidates stored creds
       - key: N8N_ENCRYPTION_KEY
         generateValue: true
