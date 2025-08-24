@@ -1,0 +1,5216 @@
+{
+  "name": "My workflow 3",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1340,
+        -80
+      ],
+      "id": "327d0185-5add-443a-8807-1ed7760b6662",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1DngCZHnVl_6DuChrk5uMbxQBtggGGQEz",
+            "mode": "list",
+            "cachedResultName": "n8n_test",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1DngCZHnVl_6DuChrk5uMbxQBtggGGQEz"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -500,
+        600
+      ],
+      "id": "78962561-c64c-4e33-aded-ca006aa80a83",
+      "name": "Search files and folders",
+      "executeOnce": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "DcI1STXEFC5nNU24",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.name }}",
+                    "rightValue": "PACKING LIST",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "a95181c6-f4a4-4042-8f48-62224e834269"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "774ee505-bdd6-4ffa-b0e7-1e9b41aa8576",
+                    "leftValue": "={{ $json.name }}",
+                    "rightValue": "SHOPEE-ORDER",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -180,
+        200
+      ],
+      "id": "9c08153f-80e6-40d6-814a-ec234f8b8170",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {
+          "keepSource": "json"
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        9040,
+        80
+      ],
+      "id": "22b7bea1-e2aa-4b9a-a4c5-7fed1a17f498",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $('merge_extract_from_file').all().map(item => {\n  const name = item.json.name || null;\n  const webViewLink = item.json.webViewLink || null;\n\n  // normalize and parse\n  const text = String(item.json.text || '').replace(/\\u0000/g, '');\n  const lines = text.split('\\n');\n\n  const descriptions = [];\n  const orderCodes = new Set();\n\n  for (let i = 0; i < lines.length; i++) {\n    const line = lines[i].trim();\n\n    if (line.includes('*ABCD')) break;\n\n    if (\n      line.startsWith('รายการสรุป') ||\n      line.startsWith('จํานวน SKU') ||\n      line.startsWith('ข้อมูลสินค้า') ||\n      line === '' ||\n      /^\\d+$/.test(line)\n    ) continue;\n\n    if (line.startsWith('*')) {\n      const match = line.match(/\\*([A-Z0-9]{4})\\s*:/);\n      if (match) orderCodes.add(match[1]);\n      continue;\n    }\n\n    descriptions.push(line);\n  }\n\n  return {\n    json: {\n      descriptions,\n      order_codes: Array.from(orderCodes),\n      source_file: name,\n      webViewLink,           // <-- added\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9460,
+        -60
+      ],
+      "id": "bd2c2f22-4266-4b7a-b823-16650cfa1ec6",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        460,
+        1220
+      ],
+      "id": "9b6b7b94-690b-44d5-803d-027912ebb1b1",
+      "name": "Download file1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "DcI1STXEFC5nNU24",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mistral.ai/v1/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "mistralCloudApi",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "purpose",
+              "value": "ocr"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -560,
+        2930
+      ],
+      "id": "81920767-acb5-49cf-9270-2ec00eac5346",
+      "name": "Upload a file",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "5iJPXFKjsO38o0lB",
+          "name": "Mistral Cloud account test"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.mistral.ai/v1/files/{{ $json.id }}/url",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "mistralCloudApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "expiry",
+              "value": "24"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -340,
+        2855
+      ],
+      "id": "c4a349b1-2410-4eb8-95bd-73ee8fc6b607",
+      "name": "Get signed URL",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "5iJPXFKjsO38o0lB",
+          "name": "Mistral Cloud account test"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mistral.ai/v1/ocr",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "mistralCloudApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"mistral-ocr-latest\",\n  \"document\": {\n    \"type\": \"document_url\",\n    \"document_url\": \"{{ $json.url }}\"\n  },\n  \"include_image_base64\": true\n} ",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        100,
+        2930
+      ],
+      "id": "f9060842-198d-4fb0-b2cd-fd91fe55028e",
+      "name": "Get OCR results",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "5iJPXFKjsO38o0lB",
+          "name": "Mistral Cloud account test"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mistral.ai/v1/ocr",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "mistralCloudApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"mistral-ocr-latest\",\n  \"document\": {\n    \"type\": \"image_url\",\n    \"image_url\": \"{{ $json.pages[0].images[0].image_base64 }}\"\n  },\n  \"include_image_base64\": true\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        320,
+        2830
+      ],
+      "id": "026f84e5-78f7-4f00-841f-4698d60b1439",
+      "name": "OCR with image",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "5iJPXFKjsO38o0lB",
+          "name": "Mistral Cloud account test"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "=https://api.mistral.ai/v1/files/{{ $('Upload a file').item.json.id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "mistralCloudApi",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -560,
+        1590
+      ],
+      "id": "6922a659-b922-4ccb-8537-b19763502b51",
+      "name": "Delete File",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "5iJPXFKjsO38o0lB",
+          "name": "Mistral Cloud account test"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return $('Get OCR results').all().map(item => {\n  const pages = item.json.pages;\n\n  const orders = [];\n\n  for (const page of pages) {\n    const lines = page.markdown.split('\\n').map(line => line.trim());\n\n    for (const line of lines) {\n      const match = line.match(/Shopee Order No\\.?\\s*([A-Z0-9]+)/i);\n      if (match && match[1]) {\n        orders.push({\n          order: match[1],\n          pageIndex: page.index\n        });\n        break; // only pick the first Shopee order number per page\n      }\n    }\n  }\n\n  // Remove duplicates\n  const uniqueOrders = [...new Set(orders.map(o => o.order))];\n  const hasMultipleOrders = uniqueOrders.length > 1;\n\n  return {\n    json: {\n      fileName: item.json.fileName,\n      fileId: item.json.fileId,\n      orderNumbers: uniqueOrders,\n      hasMultipleOrders,\n      totalOrders: uniqueOrders.length,\n      orderDetails: orders\n    }\n  };\n});\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        3030
+      ],
+      "id": "85e166cb-27a0-4bad-a0c7-0cbd0c21e9f5",
+      "name": "Check Duplicate Orders"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -120,
+        2930
+      ],
+      "id": "c4300ad5-0044-4483-9676-36c396c330cb",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "operation": "Convert from PDF",
+        "url": "={{ $json.webViewLink }}",
+        "convertType": "toPng",
+        "advancedOptions_Image": {
+          "name": "={{ $json.id }}_file_name_{{ $json.name }}"
+        }
+      },
+      "type": "n8n-nodes-pdfco.PDFco Api",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        3290
+      ],
+      "id": "01c3d066-21fe-4a20-ae4a-ca35d83543f6",
+      "name": "PDFco Api1",
+      "credentials": {
+        "pdfcoApi": {
+          "id": "365z8Kq1Iijzburb",
+          "name": "PDF.co account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "text": "=You are an expert in extracting delivery information from shipping labels.\n\nFrom the image provided, extract and return the following fields:\n\n1. **Shipping Company**: (e.g., BEST EXPRESS, SPX EXPRESS — usually in the top-left)\n2. **Shopee Order No.**: (Look for the field labeled \"Shopee Order No.\")\n3. **ชื่อสินค้า**: (Thai product name under the column ชื่อสินค้า. There may be multiple SKUs — extract all rows. Each product usually starts with a new number under the \"#\" column)\n\n🧾 Return the result in parameter format like this:\n{\n  \"file_id\": \"{{ $json.name }}\",\n  \"shipping_company\": \"\",\n  \"shopee_order_no\": \"\",\n  \"product_name_thai\": [\n    \"Product 1 name in Thai\",\n    \"Product 2 name in Thai\"\n  ]\n}\n\n💡 Notes:\n- Do not hallucinate or infer missing information.\n- Only extract text that is clearly visible in the image.\n- Keep Thai product names exactly as shown.\n- Do not wrap the output in code block syntax like ```json.\n- Do not wrap the entire result in quotes (i.e. it should not be a JSON string).\n- Do not add any explanation or extra content.\n- Only output pure JSON object.",
+        "imageUrls": "={{ $json.body[0] }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -340,
+        3290
+      ],
+      "id": "b82963bd-0c1f-41da-aabe-9bfab1a06891",
+      "name": "Analyze image",
+      "credentials": {
+        "openAiApi": {
+          "id": "3Wg72Q6i2SkmxlBQ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "check correctness of input and delete existin process",
+        "height": 120,
+        "width": 200,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        -140
+      ],
+      "id": "6c791f24-ad14-4a4c-be8a-92e72c17fd29",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.fileName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "19GclapMVeWKQJC_Nwqra30ORX1WeTeMs",
+          "mode": "list",
+          "cachedResultName": "processed",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/19GclapMVeWKQJC_Nwqra30ORX1WeTeMs"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1180,
+        1040
+      ],
+      "id": "c289f426-cba7-40f8-9f1a-2d6525b5e310",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "DcI1STXEFC5nNU24",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "90a01f97-21fc-408d-bed0-3dd24e547602",
+              "leftValue": "={{ $json.name }}",
+              "rightValue": "SHOPEE-ORDER.pdf",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        200,
+        1220
+      ],
+      "id": "a91f20ef-aef5-49cf-88d6-1f92c779f6b6",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const json = JSON.parse(item.json.content); // parse stringified JSON\n\n  // Extract true file_id and file_name from packed file_id\n  if (json.file_id && json.file_id.includes('_file_name_')) {\n    const [idPart, namePart] = json.file_id.split('_file_name_');\n    json.file_id = idPart;\n    json.file_name = namePart.replace(/\\.json$/, ''); // remove .json extension\n  }\n\n  return { json };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -120,
+        3290
+      ],
+      "id": "8c9b5ba7-0a34-40f1-976a-b92f7713ad6b",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "jsCode": "function getSimilarityKey(productName, wordCount = 5) {\n  return productName\n    .replace(/^Kefva\\s+/i, '') // remove \"Kefva \" at the beginning\n    .split(/\\s+/)\n    .slice(0, wordCount)\n    .join(' ')\n    .toLowerCase();\n}\n\n// Map and attach similarity_key\nconst enhancedItems = items.map(item => {\n  const name = item.json.product_name_thai?.[0] || '';\n  const similarity_key = getSimilarityKey(name);\n\n  return {\n    json: {\n      ...item.json,\n      similarity_key\n    }\n  };\n});\n\n// Sort by similarity_key\nenhancedItems.sort((a, b) => a.json.similarity_key.localeCompare(b.json.similarity_key));\n\nreturn enhancedItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        100,
+        3290
+      ],
+      "id": "571f26a3-6113-4d2a-86da-d16b728ce2d0",
+      "name": "group similar"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1180,
+        1540
+      ],
+      "id": "6614ccc2-9f88-4270-902a-c546657057c4",
+      "name": "Download file2",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "DcI1STXEFC5nNU24",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## OCR 1st exp",
+        "height": 520,
+        "width": 1440,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -790,
+        2670
+      ],
+      "id": "509a8984-ae3a-42ff-b30b-ce335848c451",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "## OCR 2nd exp",
+        "height": 340,
+        "width": 980,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -670,
+        3110
+      ],
+      "id": "596d79b5-7841-4519-a171-363c1de286dd",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-3-5-haiku-20241022",
+          "mode": "list",
+          "cachedResultName": "Claude Haiku 3.5"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        1520,
+        1100
+      ],
+      "id": "c6d7ac2c-27c2-489c-9c03-08ee8e67d130",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "NUhLdgj5nMl2e4L6",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.fullText }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=## 🧠 Prompt: Extract Shipping Details from OCR\n\nYou are an expert in extracting structured delivery information from raw OCR text (from shipping labels).\n\nFrom the `fullText` string provided, extract and return the following fields:\n\n1. **shipping_company**: The courier or logistics provider, such as BEST EXPRESS, SPX EXPRESS, or FLASH EXPRESS. Usually appears near the top.  \n2. **shopee_order_no**: A string labeled **\"Shopee Order No.\"** — may appear multiple times. Return only the **first** one.  \n3. **product_name_thai**: All product names listed under or near the label **\"ชื่อสินค้า\"**. There may be multiple SKUs. Each typically starts after a new number or bullet.\n\n---\n\n### ✅ Return the result in this format (pure JSON — no code block):\n```json\n{\n  \"shipping_company\": \"\",\n  \"shopee_order_no\": \"\",\n  \"product_name_thai\": [\n    \"Product 1 name in Thai\",\n    \"Product 2 name in Thai\"\n  ]\n}\n\n❗️ Rules:\n- Do not hallucinate or guess.\n- Keep product names exactly as shown in Thai.\n- Do not explain anything — only return a pure JSON object.\n- please ignore the PICK or UP around the shipping company",
+          "batching": {
+            "batchSize": 20
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        1640,
+        840
+      ],
+      "id": "b874629e-0ab7-4cf0-82ac-1f55b310d89e",
+      "name": "AI Agent1",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const { DocumentProcessorServiceClient } = require('@google-cloud/documentai').v1;\nconst client = new DocumentProcessorServiceClient();\n\n// Replace with your project settings\nconst projectId = 'n8n-doc-464814';\nconst location = 'us';\nconst processorId = 'ede74ddcac09dcd5';\n\nconst name = `projects/${projectId}/locations/${location}/processors/${processorId}`;\n\n// Helper to extract text using textAnchor\nfunction extractText(text, textAnchor) {\n  if (!textAnchor.textSegments || textAnchor.textSegments.length === 0) return '';\n  const start = textAnchor.textSegments[0].startIndex || 0;\n  const end = textAnchor.textSegments[0].endIndex;\n  return text.substring(start, end);\n}\n\nconst results = [];\n\nfor (const item of items) {\n  const binary = item.binary.data;\n  const buffer = Buffer.from(binary.data, 'base64');\n  const encoded = buffer.toString('base64');\n\n  const request = {\n    name,\n    rawDocument: {\n      content: encoded,\n      mimeType: 'application/pdf',\n    },\n  };\n\n  const [result] = await client.processDocument(request);\n  const { document } = result;\n  const { text } = document;\n\n  const pageTexts = [];\n\n  for (const page of document.pages) {\n    const paragraphs = page.paragraphs || [];\n    for (const p of paragraphs) {\n      const paragraphText = extractText(text, p.layout.textAnchor);\n      pageTexts.push(paragraphText);\n    }\n  }\n\n  results.push({\n    json: {\n      fileName: item.binary.data.fileName,\n      fileId: item.json.id,\n      fullText: text,\n      paragraphs: pageTexts,\n    },\n  });\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1160,
+        420
+      ],
+      "id": "5545f279-2a71-4dbc-9824-50c79ad4e9a0",
+      "name": "Google AI Doc"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map((item, index) => {\n  const outputData = item.json.output;\n\n  try {\n    // If it's a string, parse it; if it's already an object, use as is\n    const json = (typeof outputData === 'string')\n      ? JSON.parse(outputData)\n      : outputData;\n\n    return { json };\n  } catch (error) {\n    return {\n      json: {\n        error: `Failed to parse item ${index + 1}`,\n        details: error.message,\n        raw: outputData,\n      }\n    };\n  }\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        845
+      ],
+      "id": "f84f0622-1045-4249-911f-c412c0d20b23",
+      "name": "JSON Formatter"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2240,
+        740
+      ],
+      "id": "4ddcbf81-5fa1-4a3b-b1b7-8bbf7a2a5340",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b2def338-9d9d-43cb-9133-beaf4912d7b1",
+              "name": "fileName",
+              "value": "={{ $json.fileName }}",
+              "type": "string"
+            },
+            {
+              "id": "af8f057b-ffc3-480a-876b-6e17bc9c3444",
+              "name": "fileId",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1820,
+        520
+      ],
+      "id": "0d36d3c1-d8c0-4a63-aec9-2ff515a44ab8",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { PDFDocument } = require('pdf-lib');\n\nconst results = [];\n\nfor (const item of items) {\n  const binaryData = item.binary.data;\n  const pdfBytes = Buffer.from(binaryData.data, 'base64');\n  const pdfDoc = await PDFDocument.load(pdfBytes);\n  const pageCount = pdfDoc.getPageCount();\n\n  for (let i = 0; i < pageCount; i++) {\n    const newPdf = await PDFDocument.create();\n    const [copiedPage] = await newPdf.copyPages(pdfDoc, [i]);\n    newPdf.addPage(copiedPage);\n    const newPdfBytes = await newPdf.save();\n\n    results.push({\n      json: {\n        fileName: `${item.binary.data.fileName.replace('.pdf', '')}_page${i + 1}.pdf`,\n        tag: item.json.tag || \"pdf-splitter-orders\"   // 👈 custom tag\n      },\n      binary: {\n        data: {\n          data: Buffer.from(newPdfBytes).toString('base64'),\n          mimeType: 'application/pdf',\n          fileName: `${item.binary.data.fileName.replace('.pdf', '')}_page${i + 1}.pdf`,\n        },\n      },\n    });\n  }\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        1220
+      ],
+      "id": "8f37ef5d-a55b-404c-99ff-cce6d9703501",
+      "name": "PDF Separation"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f9a72ae9-37ee-47bd-8d08-e9bf93be84fb",
+              "name": "fileId",
+              "value": "={{ $json.fileId }}",
+              "type": "string"
+            },
+            {
+              "id": "fb5231d6-74ba-4964-b887-2bf6262a9cf2",
+              "name": "product_name_thai",
+              "value": "={{ $json.product_name_thai }}",
+              "type": "array"
+            },
+            {
+              "id": "221c5939-6672-48ed-9b4c-5096e427786d",
+              "name": "shipping_company",
+              "value": "={{ $json.shipping_company }}",
+              "type": "string"
+            },
+            {
+              "id": "eddc8609-3151-43dc-90af-f872bdbd2602",
+              "name": "shopee_order_no",
+              "value": "={{ $json.shopee_order_no }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2380,
+        260
+      ],
+      "id": "0f4492f4-d29c-4312-9c6a-7a2276a075c4",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.data }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an assistant that sorts product items based on the similarity of their Thai product names.\n\n\n\nEach item has:\n- fileId\n- product_name_thai (a list of Thai product names)\n- shipping company\n- order_no\n\nYour task:\n\n- Return a JSON array sorted so that items with similar product_name_thai are close to each other (at 1st you must sort by shipping company as a pre then sort with products - as final step if you find same order id not next to each other please make them next to each other and do not bother with the sequence you got from th first 2 steps).\n\n- Do not group. Just sort.\n\n- Do not drop or change any item.\n\n- Return only valid JSON.\n\n\n\n### ✅ Return the result in this format (pure JSON — no code block):\n\njson\n\n{\n\n  \"fileId\": [fileId_1, fileId_2, fileId_3]\n\n}\n\n\n\n⚠️ Important:\n\n- Return only fileID after soring (use string fileID as key)\n\n- Do not include any explanation or commentary.\n\n- Do not wrap the output in markdown (no\njson or \n).\n- Only return raw JSON array."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        2820,
+        260
+      ],
+      "id": "8f4124fa-64b3-4d45-8f21-4128dd0a05b2",
+      "name": "AI Agent2",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const combined = items.map(item => item.json);\n\nreturn [\n  {\n    json: {\n      data: combined\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2600,
+        260
+      ],
+      "id": "d4d2056c-19fc-4c45-a1b7-71da7aaa5ca8",
+      "name": "Code3"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-4-20250514",
+          "mode": "list",
+          "cachedResultName": "Claude Sonnet 4"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        2840,
+        500
+      ],
+      "id": "f37a3111-9eec-4d07-b071-507a6339b24d",
+      "name": "Anthropic Chat Model1",
+      "credentials": {
+        "anthropicApi": {
+          "id": "NUhLdgj5nMl2e4L6",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "fileId",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3492,
+        520
+      ],
+      "id": "31e34695-05f4-4650-92f9-f975508395e7",
+      "name": "Merge3"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const raw = item.json.output;\n\n  let fileList = [];\n  try {\n    if (typeof raw === 'string') {\n      // case: JSON string\n      fileList = JSON.parse(raw);\n    } else if (raw && typeof raw.fileId === 'string') {\n      // case: object with comma-separated IDs\n      fileList = raw.fileId.split(',').map(id => ({ fileId: id.trim() }));\n    } else if (raw && Array.isArray(raw.fileId)) {\n      // case: object with array of IDs\n      fileList = raw.fileId.map(id => ({ fileId: id }));\n    } else {\n      throw new Error('Unsupported format for output');\n    }\n  } catch (err) {\n    return [{ json: { error: 'Invalid format', message: err.message } }];\n  }\n\n  return fileList.map(entry => ({ json: entry }));\n}).flat();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3180,
+        260
+      ],
+      "id": "f72b67f1-8d92-42d1-ad84-d6681e4d0812",
+      "name": "gpt json formatter1"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1iZ7ba-vKLmjrI9SkbjfBe2lr0uB1mRPzkfMyAgPq7GQ",
+          "mode": "list",
+          "cachedResultName": "check_today_ordersheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iZ7ba-vKLmjrI9SkbjfBe2lr0uB1mRPzkfMyAgPq7GQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "shopee",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iZ7ba-vKLmjrI9SkbjfBe2lr0uB1mRPzkfMyAgPq7GQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fileId": "={{ $json.fileId }}",
+            "fileName": "={{ $json.fileName }}",
+            "shipping_company": "={{ $json.shipping_company }}",
+            "shopee_order_no": "={{ $json.shopee_order_no }}",
+            "product_name_thai": "={{ $json.product_name_thai }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "fileId",
+              "displayName": "fileId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fileName",
+              "displayName": "fileName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "shipping_company",
+              "displayName": "shipping_company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "shopee_order_no",
+              "displayName": "shopee_order_no",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "product_name_thai",
+              "displayName": "product_name_thai",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -560,
+        2570
+      ],
+      "id": "8cdc6aaf-ffa1-4276-964f-451dffe5ba50",
+      "name": "delete",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Yadw0pb5EqVuQBX1",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "suwijak.nim@gmail.com",
+        "subject": "Please Approve the sorting and VAT",
+        "message": "=Please approve the {{ $json.platform }} sheets and include VAT\n\nhttps://docs.google.com/spreadsheets/d/1iZ7ba-vKLmjrI9SkbjfBe2lr0uB1mRPzkfMyAgPq7GQ/edit?usp=sharing",
+        "options": {
+          "limitWaitTime": {
+            "values": {
+              "resumeAmount": 60,
+              "resumeUnit": "minutes"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        4152,
+        520
+      ],
+      "id": "e3518b1f-0baa-4c5f-a801-60b37a4c6abf",
+      "name": "Send a message",
+      "webhookId": "dde0f0c4-1c88-4ae7-95bc-6d5d7ea5da55",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jCvYhMxptmbQAxNp",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "if (items.length > 0) {\n  return [{ json: { platform: 'shopee' } }];\n} else {\n  return [];\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3932,
+        520
+      ],
+      "id": "14862507-4111-4e70-8fa1-51d02e4067ea",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { DocumentProcessorServiceClient } = require('@google-cloud/documentai').v1;\nconst client = new DocumentProcessorServiceClient();\n\n// Replace with your project settings\nconst projectId = 'n8n-doc-464814';\nconst location = 'us';\nconst processorId = 'ede74ddcac09dcd5';\n\nconst name = `projects/${projectId}/locations/${location}/processors/${processorId}`;\n\n// Helper to extract text using textAnchor\nfunction extractText(text, textAnchor) {\n  if (!textAnchor.textSegments || textAnchor.textSegments.length === 0) return '';\n  const start = textAnchor.textSegments[0].startIndex || 0;\n  const end = textAnchor.textSegments[0].endIndex;\n  return text.substring(start, end);\n}\n\nconst results = [];\n\nfor (const item of items) {\n  const binary = item.binary.data;\n  const buffer = Buffer.from(binary.data, 'base64');\n  const encoded = buffer.toString('base64');\n\n  const request = {\n    name,\n    rawDocument: {\n      content: encoded,\n      mimeType: 'application/pdf',\n    },\n  };\n\n  const [result] = await client.processDocument(request);\n  const { document } = result;\n  const { text } = document;\n\n  const pageTexts = [];\n\n  for (const page of document.pages) {\n    const paragraphs = page.paragraphs || [];\n    for (const p of paragraphs) {\n      const paragraphText = extractText(text, p.layout.textAnchor);\n      pageTexts.push(paragraphText);\n    }\n  }\n\n  results.push({\n    json: {\n      fullText: text,\n      paragraphs: pageTexts,\n    },\n  });\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -340,
+        3650
+      ],
+      "id": "5592d4ad-75d0-4838-9abe-3dae8aea55cd",
+      "name": "Google AI Doc1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.fullText }}",
+        "options": {
+          "systemMessage": "=You are an expert in cleaning and structuring Thai product catalog data extracted from OCR (Optical Character Recognition).\n\nGiven the raw OCR full text below (which may contain noise, misread characters, misplaced line breaks, or duplicate text), your task is to extract and return a **cleaned JSON array**. Each item should represent one product and must include these fields:\n\n- `product_name`: Full name of the product in Thai\n- `brand`: Brand or manufacturer name (if available)\n- `weight`: Weight or size (e.g., \"40 ก.\", \"248.4 ก.\", \"15 ก.\")\n- `unit`: Unit (e.g., \"ซอง\", \"ชิ้น\", \"กล่อง\", \"แพ็ค\")\n- `price`: Price for a single item (e.g., \"10\", \"25\", \"62\")\nYou MUST:\n- Group all relevant lines that belong to a product together\n- Merge fragmented sentences into complete descriptions\n- Correct common OCR errors (e.g., \"ชอง\" → \"ซอง\", \"ของ\" → \"ซอง\", \"ก.\" = \"กรัม\")\n- Ignore page footer, date ranges, or store legal disclaimers\n\nReturn only a JSON array like this:\n```json\n[\n  {\n    \"product_name\": \"\",\n    \"brand\": \"\",\n    \"weight\": \"\",\n    \"unit\": \"\",\n    \"price\": ,\n  },\n  {\n    \"product_name\": \"\",\n    \"brand\": \"\",\n    \"weight\": \"\",\n    \"unit\": \"\",\n    \"price\": ,\n  }\n]\n\n**Return only valid raw JSON array** with no explanation or markdown. Do not wrap with ```json or any text. Do not explain anything. Just output JSON."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -120,
+        3650
+      ],
+      "id": "b422ea52-71c5-488c-9735-47d3dc39d91d",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-4-20250514",
+          "mode": "list",
+          "cachedResultName": "Claude Sonnet 4"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        -560,
+        4010
+      ],
+      "id": "4aa98a86-ef11-44d4-a4f2-f26660e91633",
+      "name": "Anthropic Chat Model2",
+      "credentials": {
+        "anthropicApi": {
+          "id": "NUhLdgj5nMl2e4L6",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const outputStr = item.json.output;\n\n  // If it's a JSON string within a string (escaped), unescape it\n  let jsonArray;\n  try {\n    jsonArray = JSON.parse(outputStr);\n  } catch (e) {\n    // Try to recover if it's double-stringified (some AI models do this)\n    jsonArray = JSON.parse(JSON.parse(outputStr));\n  }\n\n  return {\n    json: {\n      products: jsonArray\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        3650
+      ],
+      "id": "b651e2c0-04a8-4b6a-b813-c3490e3d9571",
+      "name": "Code4"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -32,
+        3870
+      ],
+      "id": "ec876d7f-c7e0-45c5-9514-f483eaf0627b",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "3Wg72Q6i2SkmxlBQ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1QqmalKBKhqFBPm2XcDLxUixPbXsY3pXr",
+          "mode": "list",
+          "cachedResultName": "183_6.png",
+          "cachedResultUrl": "https://drive.google.com/file/d/1QqmalKBKhqFBPm2XcDLxUixPbXsY3pXr/view?usp=drivesdk"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -560,
+        3650
+      ],
+      "id": "2d3dc012-cec3-4301-b5d1-0cdac43d27a8",
+      "name": "Download file3",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "DcI1STXEFC5nNU24",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e85a55b7-5ed2-4474-91c9-05e059330c27",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4372,
+        520
+      ],
+      "id": "44a58145-f24a-45a6-97e6-9068c17665ef",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "formTitle": "กรุณากรอกรายละเอียด",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "กรุณากรอกชื่อ sheet",
+              "fieldType": "textarea",
+              "placeholder": "={{\n  (() => {\n    const months = [\"มกราคม\", \"กุมภาพันธ์\", \"มีนาคม\", \"เมษายน\", \"พฤษภาคม\", \"มิถุนายน\", \"กรกฎาคม\", \"สิงหาคม\", \"กันยายน\", \"ตุลาคม\", \"พฤศจิกายน\", \"ธันวาคม\"];\n    const now = new Date();\n    return `${months[now.getMonth()]}-${now.getFullYear()}`;\n  })()\n}}\n",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -2140,
+        140
+      ],
+      "id": "798ee74c-a9c2-49e5-b62e-3b7d0cff6e75",
+      "name": "On form submission",
+      "webhookId": "424d2fee-5551-4e34-b137-c40c8cf78380"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1iZ7ba-vKLmjrI9SkbjfBe2lr0uB1mRPzkfMyAgPq7GQ",
+          "mode": "list",
+          "cachedResultName": "check_today_ordersheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iZ7ba-vKLmjrI9SkbjfBe2lr0uB1mRPzkfMyAgPq7GQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1371054729,
+          "mode": "list",
+          "cachedResultName": "shopee",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iZ7ba-vKLmjrI9SkbjfBe2lr0uB1mRPzkfMyAgPq7GQ/edit#gid=1371054729"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fileId": "={{ $json.fileId }}",
+            "fileName": "={{ $json.fileName }}",
+            "shipping_company": "={{ $json.shipping_company }}",
+            "product_name_thai": "={{ $json.product_name_thai }}",
+            "หมายเลขคำสั่งซื้อ": "={{ $json.shopee_order_no }}",
+            "ขนส่ง": "={{ $json.shipping_company.split(' ')[0] }}",
+            "แพลตฟอร์ม": "SHOPEE"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "fileId",
+              "displayName": "fileId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fileName",
+              "displayName": "fileName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "shipping_company",
+              "displayName": "shipping_company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "product_name_thai",
+              "displayName": "product_name_thai",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "หมายเลขคำสั่งซื้อ",
+              "displayName": "หมายเลขคำสั่งซื้อ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "แพลตฟอร์ม",
+              "displayName": "แพลตฟอร์ม",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ขนส่ง",
+              "displayName": "ขนส่ง",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Is_vat",
+              "displayName": "Is_vat",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        3712,
+        520
+      ],
+      "id": "9349924a-3cb1-4830-9e92-c1759a8a52f0",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Yadw0pb5EqVuQBX1",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Check ว่า Sheet exuit ไหท",
+        "height": 120,
+        "width": 200,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        -140
+      ],
+      "id": "38c70b11-c701-44cd-a047-272f28bf99fb",
+      "name": "Sticky Note9"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1iZ7ba-vKLmjrI9SkbjfBe2lr0uB1mRPzkfMyAgPq7GQ",
+          "mode": "list",
+          "cachedResultName": "check_today_ordersheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iZ7ba-vKLmjrI9SkbjfBe2lr0uB1mRPzkfMyAgPq7GQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1371054729,
+          "mode": "list",
+          "cachedResultName": "shopee",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iZ7ba-vKLmjrI9SkbjfBe2lr0uB1mRPzkfMyAgPq7GQ/edit#gid=1371054729"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        4640,
+        500
+      ],
+      "id": "0fe43f96-dc98-47f7-88a5-1533c87ea4c8",
+      "name": "get_today_orders",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Yadw0pb5EqVuQBX1",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "keep": "lastItems"
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        5692,
+        945
+      ],
+      "id": "770a1a1f-0a1d-4a4a-84bc-ccb4bcd6c51f",
+      "name": "limit_last_vat"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ---------- pull inputs safely ----------\nconst todayItems = $items('filter_vat_from_today_orders', 0, 0) || [];  // today orders\nconst lastItems  = $items('limit_last_vat',        0, 0) || [];  // \n\nconst lastJobJson = lastItems.length ? (lastItems[0].json || {}) : {};\nconst lastJobRaw  = ((lastJobJson['JOB.'] ?? lastJobJson['JOB']) ?? '').toString().trim();\n\n// ---------- build YYMMDD (Bangkok) ----------\nconst parts = new Intl.DateTimeFormat('en-GB', {\n  timeZone: 'Asia/Bangkok', year: '2-digit', month: '2-digit', day: '2-digit',\n}).formatToParts(new Date());\nconst yy = parts.find(p => p.type === 'year').value;\nconst mm = parts.find(p => p.type === 'month').value;\nconst dd = parts.find(p => p.type === 'day').value;\nconst todayPrefix = `${yy}${mm}${dd}`;\n\n// ---------- figure starting counter ----------\nlet startCounter = 0;\nconst m = lastJobRaw.match(/^(\\d{6})(\\d{3})$/);\nif (m && m[1] === todayPrefix) startCounter = parseInt(m[2], 10);\n\n// ---------- stable order + assign ----------\nconst sorted = [...todayItems].sort((a, b) => {\n  const ar = a.json.row_number ?? Number.MAX_SAFE_INTEGER;\n  const br = b.json.row_number ?? Number.MAX_SAFE_INTEGER;\n  if (ar !== br) return ar - br;\n  const ao = (a.json['หมายเลขคำสั่งซื้อ'] ?? '').toString();\n  const bo = (b.json['หมายเลขคำสั่งซื้อ'] ?? '').toString();\n  return ao.localeCompare(bo, 'th');\n});\n\nlet i = 0;\nreturn sorted.map(it => {\n  const running = String(startCounter + (++i)).padStart(3, '0');\n  const job = `${todayPrefix}${running}`;\n  return { json: { ...it.json, 'JOB.': job } };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5912,
+        945
+      ],
+      "id": "af49f746-d070-42ee-bbe1-73cf8f624971",
+      "name": "generate_vat_job_no"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1h4JOg-FJbGLFdoPP1M3u-Dnu_tQ-xap2gTaWd5LOfw0",
+          "mode": "list",
+          "cachedResultName": "ระบบติดตามเอกสารและคำสั่งซื้อ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1h4JOg-FJbGLFdoPP1M3u-Dnu_tQ-xap2gTaWd5LOfw0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('On form submission').first().json[\"กรุณากรอกชื่อ sheet\"] }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "หมายเลขคำสั่งซื้อ": "={{ $json[\"หมายเลขคำสั่งซื้อ\"] }}",
+            "แพลตฟอร์ม": "={{ $json[\"แพลตฟอร์ม\"] }}",
+            "ขนส่ง": "={{ $json[\"ขนส่ง\"] }}",
+            "JOB.": "={{ $json[\"JOB.\"] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "วัน/เดือน/ปี",
+              "displayName": "วัน/เดือน/ปี",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "JOB.",
+              "displayName": "JOB.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "หมายเลขคำสั่งซื้อ",
+              "displayName": "หมายเลขคำสั่งซื้อ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "แพลตฟอร์ม",
+              "displayName": "แพลตฟอร์ม",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ขนส่ง",
+              "displayName": "ขนส่ง",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "สถานะ",
+              "displayName": "สถานะ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "วันที่อัพเดท",
+              "displayName": "วันที่อัพเดท",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "สาเหตุการยกเลิก (ถ้ามี)",
+              "displayName": "สาเหตุการยกเลิก (ถ้ามี)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "หมายเหตุ",
+              "displayName": "หมายเหตุ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ค่าขนส่ง นอก PF.",
+              "displayName": "ค่าขนส่ง นอก PF.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ของตีกลับ",
+              "displayName": "ของตีกลับ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "เข้าสต๊อก/ของเสีย",
+              "displayName": "เข้าสต๊อก/ของเสีย",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Column 15",
+              "displayName": "Column 15",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Column 16",
+              "displayName": "Column 16",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Column 16",
+              "displayName": "Column 16",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        6140,
+        940
+      ],
+      "id": "2047d129-e4f6-46f6-aea1-4f8133c71f2a",
+      "name": "append_vat_order",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Yadw0pb5EqVuQBX1",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "keep": "lastItems"
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        7452,
+        820
+      ],
+      "id": "ac911722-5f28-4bbb-a2e5-f34b1a9c1b9b",
+      "name": "limit_last_not_vat"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ---------- pull inputs safely ----------\nconst todayItems = $items('is_no_vat_in_today_orders',0, 0) || [];\nconst lastItems  = $items('limit_last_not_vat', 0, 0) || [];\nconst lastJson   = lastItems[0]?.json ?? {};\nconst lastRaw    = ((lastJson['JOB.'] ?? lastJson['JOB']) ?? '').toString().trim();\n\n\n// ---------- Thai year (BE) YY in Bangkok ----------\nconst parts = new Intl.DateTimeFormat('th-TH-u-ca-buddhist-nu-latn', {\n  timeZone: 'Asia/Bangkok',\n  year: '2-digit', month: '2-digit', day: '2-digit',\n}).formatToParts(new Date());\nconst YY = parts.find(p => p.type === 'year').value; // e.g., \"68\"\n\n// ---------- derive starting counter & width from last code ----------\nlet startCounter = 0;\nlet padWidth = 4; // minimum width when starting fresh\n\n// Accept \"68/0001\", \"68/1\", \"68/12522\"\nconst m = lastRaw.match(/^(\\d{2})\\/(\\d+)$/);\nif (m) {\n  const lastYY = m[1];\n  const lastNumStr = m[2];\n  const lastNum = parseInt(lastNumStr, 10);\n  if (lastYY === YY && Number.isFinite(lastNum)) {\n    startCounter = lastNum;                     // continue from latest\n    padWidth = Math.max(lastNumStr.length, 1);  // preserve current width\n  }\n  // If you want to keep counting across years, remove the year check above.\n}\n\n// ---------- stable order (optional) ----------\nconst sorted = [...todayItems].sort((a, b) => {\n  const ar = a.json.row_number ?? Number.MAX_SAFE_INTEGER;\n  const br = b.json.row_number ?? Number.MAX_SAFE_INTEGER;\n  if (ar !== br) return ar - br;\n  const ao = (a.json['หมายเลขคำสั่งซื้อ'] ?? '').toString();\n  const bo = (b.json['หมายเลขคำสั่งซื้อ'] ?? '').toString();\n  return ao.localeCompare(bo, 'th');\n});\n\n// ---------- assign YY/NN.. (width grows naturally) ----------\nlet i = 0;\nreturn sorted.map(it => {\n  const nextNum = startCounter + (++i);                  // e.g., 13115 -> 13116\n  const numStr  = nextNum.toString().padStart(padWidth, '0'); // keep zeros until it outgrows\n  const code    = `${YY}/${numStr}`;\n  return { json: { ...it.json, 'JOB.': code } };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7672,
+        820
+      ],
+      "id": "5bc6a2db-e3ad-4914-bc0d-65ec939c047a",
+      "name": "generate_no_vat_job_no"
+    },
+    {
+      "parameters": {
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Please add the latest order",
+              "placeholder": "xx/xxxxx",
+              "requiredField": true
+            }
+          ]
+        },
+        "limitWaitTime": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 1,
+      "position": [
+        7440,
+        360
+      ],
+      "id": "cae85ef0-073f-443f-9f2e-d2030e7bd457",
+      "name": "Form",
+      "webhookId": "d7e370ac-7045-47d3-833e-b76b3acbf764"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1h4JOg-FJbGLFdoPP1M3u-Dnu_tQ-xap2gTaWd5LOfw0",
+          "mode": "list",
+          "cachedResultName": "ระบบติดตามเอกสารและคำสั่งซื้อ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1h4JOg-FJbGLFdoPP1M3u-Dnu_tQ-xap2gTaWd5LOfw0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('On form submission').first().json[\"กรุณากรอกชื่อ sheet\"] }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "หมายเลขคำสั่งซื้อ": "={{ $json[\"หมายเลขคำสั่งซื้อ\"] }}",
+            "แพลตฟอร์ม": "={{ $json[\"แพลตฟอร์ม\"] }}",
+            "ขนส่ง": "={{ $json[\"ขนส่ง\"] }}",
+            "JOB.": "={{ $json[\"JOB.\"] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "วัน/เดือน/ปี",
+              "displayName": "วัน/เดือน/ปี",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "JOB.",
+              "displayName": "JOB.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "หมายเลขคำสั่งซื้อ",
+              "displayName": "หมายเลขคำสั่งซื้อ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "แพลตฟอร์ม",
+              "displayName": "แพลตฟอร์ม",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ขนส่ง",
+              "displayName": "ขนส่ง",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "สถานะ",
+              "displayName": "สถานะ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "วันที่อัพเดท",
+              "displayName": "วันที่อัพเดท",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "สาเหตุการยกเลิก (ถ้ามี)",
+              "displayName": "สาเหตุการยกเลิก (ถ้ามี)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "หมายเหตุ",
+              "displayName": "หมายเหตุ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ค่าขนส่ง นอก PF.",
+              "displayName": "ค่าขนส่ง นอก PF.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ของตีกลับ",
+              "displayName": "ของตีกลับ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "เข้าสต๊อก/ของเสีย",
+              "displayName": "เข้าสต๊อก/ของเสีย",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Column 15",
+              "displayName": "Column 15",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Column 16",
+              "displayName": "Column 16",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Column 16",
+              "displayName": "Column 16",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        7900,
+        580
+      ],
+      "id": "25186204-e01f-4935-8ee8-77c1c3d11dde",
+      "name": "append_no_vat_order",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Yadw0pb5EqVuQBX1",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ---------- pull inputs safely ----------\nconst todayItems = $items('is_no_vat_in_today_orders',0, 0) || [];\nconst lastItems  = $input.first().json[\"Please add the latest order\"]\n// const lastJson   = lastItems[0]?.json ?? {};\nconst lastRaw    = lastItems;\n\n\n// ---------- Thai year (BE) YY in Bangkok ----------\nconst parts = new Intl.DateTimeFormat('th-TH-u-ca-buddhist-nu-latn', {\n  timeZone: 'Asia/Bangkok',\n  year: '2-digit', month: '2-digit', day: '2-digit',\n}).formatToParts(new Date());\nconst YY = parts.find(p => p.type === 'year').value; // e.g., \"68\"\n\n// ---------- derive starting counter & width from last code ----------\nlet startCounter = 0;\nlet padWidth = 4; // minimum width when starting fresh\n\n// Accept \"68/0001\", \"68/1\", \"68/12522\"\nconst m = lastRaw.match(/^(\\d{2})\\/(\\d+)$/);\nif (m) {\n  const lastYY = m[1];\n  const lastNumStr = m[2];\n  const lastNum = parseInt(lastNumStr, 10);\n  if (lastYY === YY && Number.isFinite(lastNum)) {\n    startCounter = lastNum;                     // continue from latest\n    padWidth = Math.max(lastNumStr.length, 1);  // preserve current width\n  }\n  // If you want to keep counting across years, remove the year check above.\n}\n\n// ---------- stable order (optional) ----------\nconst sorted = [...todayItems].sort((a, b) => {\n  const ar = a.json.row_number ?? Number.MAX_SAFE_INTEGER;\n  const br = b.json.row_number ?? Number.MAX_SAFE_INTEGER;\n  if (ar !== br) return ar - br;\n  const ao = (a.json['หมายเลขคำสั่งซื้อ'] ?? '').toString();\n  const bo = (b.json['หมายเลขคำสั่งซื้อ'] ?? '').toString();\n  return ao.localeCompare(bo, 'th');\n});\n\n// ---------- assign YY/NN.. (width grows naturally) ----------\nlet i = 0;\nreturn sorted.map(it => {\n  const nextNum = startCounter + (++i);                  // e.g., 13115 -> 13116\n  const numStr  = nextNum.toString().padStart(padWidth, '0'); // keep zeros until it outgrows\n  const code    = `${YY}/${numStr}`;\n  return { json: { ...it.json, 'JOB.': code } };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7680,
+        360
+      ],
+      "id": "5e8ba1d0-2dbd-4e2f-9d8f-098d94417110",
+      "name": "generate_no_vat_job_no_from_other_sheet"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b3e18e8c-3b7c-4dc3-986b-c1c4830d47e3",
+              "leftValue": "={{ $json }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        7232,
+        570
+      ],
+      "id": "53dc661e-80e1-4799-950f-311bd9f54c2b",
+      "name": "check_if_new_sheet"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2726f5b1-df06-4cf9-8a65-fd9f79c0f0a8",
+              "leftValue": "={{ $('get_existing_orders').item.json['JOB.'] }}",
+              "rightValue": "/",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "04e6a52b-0132-43f4-bda9-61ba73949d98",
+              "leftValue": "={{ $('get_existing_orders').item.json['JOB.'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        5472,
+        945
+      ],
+      "id": "95309162-c5fa-4c68-9be5-cdc7e15ac2bc",
+      "name": "filter_vat_from_existing_orders",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "10cc36db-e8a7-4f4f-acc5-5f95c3a820d1",
+              "leftValue": "={{ $('get_today_orders').item.json.Is_vat }}",
+              "rightValue": "VAT",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        4812,
+        770
+      ],
+      "id": "7ceaa37c-56fb-4e30-bd60-9995af709679",
+      "name": "filter_vat_from_today_orders",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1h4JOg-FJbGLFdoPP1M3u-Dnu_tQ-xap2gTaWd5LOfw0",
+          "mode": "list",
+          "cachedResultName": "ระบบติดตามเอกสารและคำสั่งซื้อ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1h4JOg-FJbGLFdoPP1M3u-Dnu_tQ-xap2gTaWd5LOfw0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('On form submission').first().json['กรุณากรอกชื่อ sheet'] }}",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        5040,
+        780
+      ],
+      "id": "0ea62364-19b4-45f3-ae1e-c66321af9754",
+      "name": "get_existing_orders",
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Yadw0pb5EqVuQBX1",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2726f5b1-df06-4cf9-8a65-fd9f79c0f0a8",
+              "leftValue": "={{ $('get_existing_orders').item.json['JOB.'] }}",
+              "rightValue": "/",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "04e6a52b-0132-43f4-bda9-61ba73949d98",
+              "leftValue": "={{ $('get_existing_orders').item.json['JOB.'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        7012,
+        570
+      ],
+      "id": "1d79dd06-93aa-440b-a990-804cf9710001",
+      "name": "filter_is_not_vat_existing_orders",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "keep": "lastItems"
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        100,
+        2310
+      ],
+      "id": "88b076fa-f3d6-4569-ac8e-e937f3abce79",
+      "name": "limit_last_not_vat1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ---------- pull inputs safely ----------\nconst todayItems = $items('switch_is_vat', 1, 0) || [];\nconst lastItems  = $items('limit_last_not_vat1', 0, 0) || [];\nconst lastJson   = lastItems[0]?.json ?? {};\nconst lastRaw    = ((lastJson['JOB.'] ?? lastJson['JOB']) ?? '').toString().trim();\n\n// ---------- Thai year (BE) YY in Bangkok ----------\nconst parts = new Intl.DateTimeFormat('th-TH-u-ca-buddhist-nu-latn', {\n  timeZone: 'Asia/Bangkok',\n  year: '2-digit', month: '2-digit', day: '2-digit',\n}).formatToParts(new Date());\nconst YY = parts.find(p => p.type === 'year').value; // e.g., \"68\"\n\n// ---------- derive starting counter & width from last code ----------\nlet startCounter = 0;\nlet padWidth = 4; // minimum width when starting fresh\n\n// Accept \"68/0001\", \"68/1\", \"68/12522\"\nconst m = lastRaw.match(/^(\\d{2})\\/(\\d+)$/);\nif (m) {\n  const lastYY = m[1];\n  const lastNumStr = m[2];\n  const lastNum = parseInt(lastNumStr, 10);\n  if (lastYY === YY && Number.isFinite(lastNum)) {\n    startCounter = lastNum;                     // continue from latest\n    padWidth = Math.max(lastNumStr.length, 1);  // preserve current width\n  }\n  // If you want to keep counting across years, remove the year check above.\n}\n\n// ---------- stable order (optional) ----------\nconst sorted = [...todayItems].sort((a, b) => {\n  const ar = a.json.row_number ?? Number.MAX_SAFE_INTEGER;\n  const br = b.json.row_number ?? Number.MAX_SAFE_INTEGER;\n  if (ar !== br) return ar - br;\n  const ao = (a.json['หมายเลขคำสั่งซื้อ'] ?? '').toString();\n  const bo = (b.json['หมายเลขคำสั่งซื้อ'] ?? '').toString();\n  return ao.localeCompare(bo, 'th');\n});\n\n// ---------- assign YY/NN.. (width grows naturally) ----------\nlet i = 0;\nreturn sorted.map(it => {\n  const nextNum = startCounter + (++i);                  // e.g., 13115 -> 13116\n  const numStr  = nextNum.toString().padStart(padWidth, '0'); // keep zeros until it outgrows\n  const code    = `${YY}/${numStr}`;\n  return { json: { ...it.json, 'JOB.': code } };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        2310
+      ],
+      "id": "92dde790-b4df-4ce1-89b0-756d70d3a1bc",
+      "name": "generate_no_vat_job_no1"
+    },
+    {
+      "parameters": {
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Please add the latest order",
+              "placeholder": "xx/xxxxx",
+              "requiredField": true
+            }
+          ]
+        },
+        "limitWaitTime": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 1,
+      "position": [
+        100,
+        2110
+      ],
+      "id": "0a18fc63-83d3-4837-a274-296bf406400c",
+      "name": "Form1",
+      "webhookId": "d7e370ac-7045-47d3-833e-b76b3acbf764"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1h4JOg-FJbGLFdoPP1M3u-Dnu_tQ-xap2gTaWd5LOfw0",
+          "mode": "list",
+          "cachedResultName": "ระบบติดตามเอกสารและคำสั่งซื้อ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1h4JOg-FJbGLFdoPP1M3u-Dnu_tQ-xap2gTaWd5LOfw0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('On form submission').first().json[\"กรุณากรอกชื่อ sheet\"] }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "หมายเลขคำสั่งซื้อ": "={{ $json[\"หมายเลขคำสั่งซื้อ\"] }}",
+            "แพลตฟอร์ม": "={{ $json[\"แพลตฟอร์ม\"] }}",
+            "ขนส่ง": "={{ $json[\"ขนส่ง\"] }}",
+            "JOB.": "={{ $json[\"JOB.\"] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "วัน/เดือน/ปี",
+              "displayName": "วัน/เดือน/ปี",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "JOB.",
+              "displayName": "JOB.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "หมายเลขคำสั่งซื้อ",
+              "displayName": "หมายเลขคำสั่งซื้อ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "แพลตฟอร์ม",
+              "displayName": "แพลตฟอร์ม",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ขนส่ง",
+              "displayName": "ขนส่ง",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "สถานะ",
+              "displayName": "สถานะ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "วันที่อัพเดท",
+              "displayName": "วันที่อัพเดท",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "สาเหตุการยกเลิก (ถ้ามี)",
+              "displayName": "สาเหตุการยกเลิก (ถ้ามี)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "หมายเหตุ",
+              "displayName": "หมายเหตุ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ค่าขนส่ง นอก PF.",
+              "displayName": "ค่าขนส่ง นอก PF.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ของตีกลับ",
+              "displayName": "ของตีกลับ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "เข้าสต๊อก/ของเสีย",
+              "displayName": "เข้าสต๊อก/ของเสีย",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Column 14",
+              "displayName": "Column 14",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Column 15",
+              "displayName": "Column 15",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Column 16",
+              "displayName": "Column 16",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        540,
+        2210
+      ],
+      "id": "d7e7f2dd-f0f8-4422-a538-811e943db730",
+      "name": "append_no_vat_order1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Yadw0pb5EqVuQBX1",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ---------- pull inputs safely ----------\nconst todayItems = $items('switch_is_vat', 1, 0) || [];\nconst lastItems  = $input.first().json[\"Please add the latest order\"]\n// const lastJson   = lastItems[0]?.json ?? {};\nconst lastRaw    = lastItems;\n\n// ---------- Thai year (BE) YY in Bangkok ----------\nconst parts = new Intl.DateTimeFormat('th-TH-u-ca-buddhist-nu-latn', {\n  timeZone: 'Asia/Bangkok',\n  year: '2-digit', month: '2-digit', day: '2-digit',\n}).formatToParts(new Date());\nconst YY = parts.find(p => p.type === 'year').value; // e.g., \"68\"\n\n// ---------- derive starting counter & width from last code ----------\nlet startCounter = 0;\nlet padWidth = 4; // minimum width when starting fresh\n\n// Accept \"68/0001\", \"68/1\", \"68/12522\"\nconst m = lastRaw.match(/^(\\d{2})\\/(\\d+)$/);\nif (m) {\n  const lastYY = m[1];\n  const lastNumStr = m[2];\n  const lastNum = parseInt(lastNumStr, 10);\n  if (lastYY === YY && Number.isFinite(lastNum)) {\n    startCounter = lastNum;                     // continue from latest\n    padWidth = Math.max(lastNumStr.length, 1);  // preserve current width\n  }\n  // If you want to keep counting across years, remove the year check above.\n}\n\n// ---------- stable order (optional) ----------\nconst sorted = [...todayItems].sort((a, b) => {\n  const ar = a.json.row_number ?? Number.MAX_SAFE_INTEGER;\n  const br = b.json.row_number ?? Number.MAX_SAFE_INTEGER;\n  if (ar !== br) return ar - br;\n  const ao = (a.json['หมายเลขคำสั่งซื้อ'] ?? '').toString();\n  const bo = (b.json['หมายเลขคำสั่งซื้อ'] ?? '').toString();\n  return ao.localeCompare(bo, 'th');\n});\n\n// ---------- assign YY/NN.. (width grows naturally) ----------\nlet i = 0;\nreturn sorted.map(it => {\n  const nextNum = startCounter + (++i);                  // e.g., 13115 -> 13116\n  const numStr  = nextNum.toString().padStart(padWidth, '0'); // keep zeros until it outgrows\n  const code    = `${YY}/${numStr}`;\n  return { json: { ...it.json, 'JOB.': code } };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        2110
+      ],
+      "id": "6652f1ae-e63c-4d74-ae51-a49440cf1987",
+      "name": "generate_no_vat_job_no_from_other_sheet1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b3e18e8c-3b7c-4dc3-986b-c1c4830d47e3",
+              "leftValue": "={{ $json }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -120,
+        2210
+      ],
+      "id": "40983b31-7691-4396-80d4-dc5e9e130833",
+      "name": "check_if_new_sheet1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2726f5b1-df06-4cf9-8a65-fd9f79c0f0a8",
+              "leftValue": "=",
+              "rightValue": "/",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "04e6a52b-0132-43f4-bda9-61ba73949d98",
+              "leftValue": "={{ $json['JOB.'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -340,
+        2210
+      ],
+      "id": "8b287d99-8639-45b3-a180-45ca917988a6",
+      "name": "filter_is_not_vat_existing_orders1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "content": "## Check this condition",
+        "height": 460,
+        "width": 1260
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -590,
+        2010
+      ],
+      "id": "23b123ae-b72a-48f5-8f8b-273c827f5be2",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1h4JOg-FJbGLFdoPP1M3u-Dnu_tQ-xap2gTaWd5LOfw0",
+          "mode": "list",
+          "cachedResultName": "ระบบติดตามเอกสารและคำสั่งซื้อ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1h4JOg-FJbGLFdoPP1M3u-Dnu_tQ-xap2gTaWd5LOfw0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('On form submission').first().json['กรุณากรอกชื่อ sheet'] }}",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -560,
+        2210
+      ],
+      "id": "8586a9af-8936-4a9c-958a-cd45c0d69596",
+      "name": "get_existing_orders1",
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Yadw0pb5EqVuQBX1",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        6360,
+        680
+      ],
+      "id": "10efa925-cbc0-4d86-9f26-78f6d6b6df39",
+      "name": "Merge2",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "10cc36db-e8a7-4f4f-acc5-5f95c3a820d1",
+              "leftValue": "={{ $('get_today_orders').item.json.Is_vat }}",
+              "rightValue": "VAT",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        6140,
+        420
+      ],
+      "id": "56bc761c-8706-451f-9916-97320c37afe3",
+      "name": "filter_non_vat_from_today_orders"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8e0c48a8-32e3-48d9-b335-5d868a060115",
+              "leftValue": "={{ $json }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        6580,
+        360
+      ],
+      "id": "64c7b51b-496f-408c-aedd-a7c530e2dfc0",
+      "name": "is_no_vat_in_today_orders"
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        6792,
+        570
+      ],
+      "id": "7f72949a-6c42-4a9d-9abd-eee249e758c2",
+      "name": "Merge4"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n    \"shipping_company\": \"BEST EXPRESS\",\n    \"shopee_order_no\": \"250724147GT276\",\n    \"product_name_thai\": [\n      \"Kefva ชั้นเหล็กอเนกประสงค์ ชั้นวางน้ำมันเครื่อง หลังตาข่าย 4 ชั้น\"\n    ]\n  }",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1860,
+        1080
+      ],
+      "id": "9fe38cca-c4ff-4449-ad1f-b8fa63fee8f8",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\"fileId\": \n[\"1wOmona-9C8Q92wpx6V-jRUYnCoUrTBmJ\",\n\"1htjR2r02LeEG-jLiackRsyTbap4VoVki\",\n\"1ibFVR6wPc9tNsemch1jBymLPoADissPS\"]\n}",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        3000,
+        440
+      ],
+      "id": "de496c0d-7a86-4824-88f6-f8af78161d76",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "88bf0e71-1e8e-4442-b742-94917d2d0f25",
+              "leftValue": "={{ ($items(\"filter_vat_from_today_orders\", 0, 0) || [])\n    .some(i => i?.json && Object.keys(i.json).length > 0) }}\n",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        5200,
+        1040
+      ],
+      "id": "529c3ac3-de9b-4300-90de-578c4df1ee59",
+      "name": "If_vat_in_today"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "={{ $json.id }}",
+            "mode": "id"
+          }
+        },
+        "options": {
+          "fields": [
+            "id",
+            "name",
+            "webViewLink"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        80,
+        180
+      ],
+      "id": "3096d0e1-a849-4a39-bf79-d931413edd56",
+      "name": "search_packing_list",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "DcI1STXEFC5nNU24",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "={{ $json.id }}",
+            "mode": "id"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -40,
+        380
+      ],
+      "id": "231e552a-f94a-4326-bb1d-6d753bdd63f1",
+      "name": "search_orders",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "DcI1STXEFC5nNU24",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "suwijak.nim@gmail.com",
+        "subject": "Please Approve ระบบติดตามเอกสารและคำสั่งซื้อ",
+        "message": "=Please approve the ระบบติดตามเอกสารและคำสั่งซื้อ sheets and include VAT\n\nhttps://docs.google.com/spreadsheets/d/1h4JOg-FJbGLFdoPP1M3u-Dnu_tQ-xap2gTaWd5LOfw0/edit?usp=sharing",
+        "options": {
+          "limitWaitTime": {
+            "values": {
+              "resumeAmount": 60,
+              "resumeUnit": "minutes"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        8112,
+        570
+      ],
+      "id": "521566bb-7f04-4b04-8230-e16df37b9f29",
+      "name": "final_approve",
+      "webhookId": "dde0f0c4-1c88-4ae7-95bc-6d5d7ea5da55",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jCvYhMxptmbQAxNp",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e85a55b7-5ed2-4474-91c9-05e059330c27",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        8332,
+        570
+      ],
+      "id": "6771c2aa-0040-49b8-a7b7-821b2aee8737",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1h4JOg-FJbGLFdoPP1M3u-Dnu_tQ-xap2gTaWd5LOfw0",
+          "mode": "list",
+          "cachedResultName": "ระบบติดตามเอกสารและคำสั่งซื้อ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1h4JOg-FJbGLFdoPP1M3u-Dnu_tQ-xap2gTaWd5LOfw0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('On form submission').first().json['กรุณากรอกชื่อ sheet'] }}",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        8552,
+        570
+      ],
+      "id": "bc51db2e-7173-437e-b6ee-9151d9945d9e",
+      "name": "get_existing_orders2",
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Yadw0pb5EqVuQBX1",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "[\"หมายเลขคำสั่งซื้อ\"]",
+        "joinMode": "enrichInput1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        8772,
+        495
+      ],
+      "id": "faf82085-a18d-4931-b05e-d7313c07517f",
+      "name": "Merge5"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8d94d50e-b710-4075-819c-4a40221911e5",
+              "name": "fileId",
+              "value": "={{ $json.fileId }}",
+              "type": "string"
+            },
+            {
+              "id": "f33a0e60-0357-4d34-9d3f-88f9183a1186",
+              "name": "fileName",
+              "value": "={{ $json.fileName }}",
+              "type": "string"
+            },
+            {
+              "id": "db0a2c1d-cf93-40a3-92d1-2997542f3150",
+              "name": "หมายเลขคำสั่งซื้อ",
+              "value": "={{ $json[\"หมายเลขคำสั่งซื้อ\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "e9b8ca1e-4288-4390-af14-0c8695ea88a7",
+              "name": "JOB.",
+              "value": "={{ $json[\"JOB.\"] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "dotNotation": false
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        8992,
+        495
+      ],
+      "id": "aa710612-bd32-4c74-81f9-7bb42317a80c",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "fileId",
+              "field2": "id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        9440,
+        1240
+      ],
+      "id": "d1b9f3ba-2046-47d2-b219-c153ff490761",
+      "name": "Merge6"
+    },
+    {
+      "parameters": {
+        "operation": "Add Text/Images to PDF",
+        "url": "={{ $json.webViewLink }}",
+        "annotations": {
+          "metadataValues": [
+            {
+              "text": "Date ______________",
+              "x": "250",
+              "y": "0",
+              "fontBold": true,
+              "width": 0,
+              "height": 0
+            },
+            {
+              "text": "=JOB. {{ $json[\"JOB.\"] }}",
+              "x": "425",
+              "y": "0",
+              "fontBold": true,
+              "width": 0,
+              "height": 0
+            }
+          ]
+        },
+        "advancedOptions": {}
+      },
+      "type": "n8n-nodes-pdfco.PDFco Api",
+      "typeVersion": 1,
+      "position": [
+        10100,
+        140
+      ],
+      "id": "57c936f6-45bf-4e39-be54-6bbf3bc60ad5",
+      "name": "PDFco Api2",
+      "credentials": {
+        "pdfcoApi": {
+          "id": "365z8Kq1Iijzburb",
+          "name": "PDF.co account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteFile",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.fileId }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -560,
+        1330
+      ],
+      "id": "4e124900-d87f-411c-a012-556cf4e3f7ae",
+      "name": "Delete a file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "DcI1STXEFC5nNU24",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "include": "specifiedFields",
+        "fieldsToInclude": "url",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        9880,
+        1240
+      ],
+      "id": "bd0843b6-2eb0-4180-beb1-016a6e0bedc3",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "operation": "deleteFile",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.fileId }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -560,
+        1850
+      ],
+      "id": "fa17c236-c4b6-4303-9373-3cafff19dffa",
+      "name": "Delete a file1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "DcI1STXEFC5nNU24",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Function node\nreturn items\n  .map(it => {\n    const raw = String(it.json[\"JOB.\"] ?? \"\");\n    const hasSlash = raw.includes(\"/\");\n    let key;\n\n    if (!hasSlash) {\n      // pure number like \"250813006\"\n      const n = parseInt(raw, 10);\n      key = Number.isFinite(n) ? n : Number.MAX_SAFE_INTEGER; // push bad values to end\n    } else {\n      // \"68/13116\" -> [68, 13116]\n      const [a, b] = raw.split(\"/\");\n      const n1 = parseInt(a, 10);\n      const n2 = parseInt(b, 10);\n      key = [\n        1,                                 // group 1 = slash group (after no-slash)\n        Number.isFinite(n1) ? n1 : 0,\n        Number.isFinite(n2) ? n2 : 0\n      ];\n    }\n\n    // group 0 = no-slash group (comes first)\n    const group = hasSlash ? 1 : 0;\n\n    return {\n      ...it,\n      json: {\n        ...it.json,\n        __group: group,\n        __key: key,\n      }\n    };\n  })\n  .sort((a, b) => {\n    // first by group (0 = no slash, 1 = slash)\n    if (a.json.__group !== b.json.__group) {\n      return a.json.__group - b.json.__group;\n    }\n\n    // within no-slash: __key is a number\n    if (a.json.__group === 0) {\n      return a.json.__key - b.json.__key;\n    }\n\n    // within slash: __key is [n1, n2]\n    const [a1, a2] = a.json.__key;\n    const [b1, b2] = b.json.__key;\n    if (a1 !== b1) return a1 - b1;\n    return a2 - b2;\n  })\n  .map((it, idx) => {\n    // clean helper fields; also fix the dot key if you want\n    const { __group, __key, ...rest } = it.json;\n    // Optional: rename \"JOB.\" -> \"JOB\"\n    // rest.JOB = String(rest[\"JOB.\"] ?? \"\");\n\n    // Add running index starting at 1\n    rest.index = idx + 1;\n\n    return { json: rest };\n  });\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9212,
+        495
+      ],
+      "id": "10cac3bb-53a9-409d-a973-71914f2c8fd8",
+      "name": "sorting"
+    },
+    {
+      "parameters": {
+        "operation": "Add Text/Images to PDF",
+        "url": "={{ $json.webViewLink }}",
+        "annotations": {
+          "metadataValues": [
+            {
+              "text": "=JOB. {{ $json[\"JOB.\"] }}",
+              "x": "418.66",
+              "y": "810",
+              "fontName": "Arial",
+              "width": 0,
+              "height": 0,
+              "transparent": false
+            }
+          ]
+        },
+        "advancedOptions": {}
+      },
+      "type": "n8n-nodes-pdfco.PDFco Api",
+      "typeVersion": 1,
+      "position": [
+        9660,
+        1240
+      ],
+      "id": "d09e9d04-fe4d-464d-b629-382fca1bb8bf",
+      "name": "add_text_pdf",
+      "credentials": {
+        "pdfcoApi": {
+          "id": "365z8Kq1Iijzburb",
+          "name": "PDF.co account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "Merge PDF",
+        "url": [
+          "={{ (Array.isArray($json) ? ($json[0]?.data ?? []) : ($json?.data ?? [])).map(x => x.url).join(',') }}\n"
+        ],
+        "advancedOptions": {}
+      },
+      "type": "n8n-nodes-pdfco.PDFco Api",
+      "typeVersion": 1,
+      "position": [
+        10100,
+        1240
+      ],
+      "id": "3655d566-a538-43cc-bd58-50405c5b0f31",
+      "name": "merge_pdf",
+      "credentials": {
+        "pdfcoApi": {
+          "id": "365z8Kq1Iijzburb",
+          "name": "PDF.co account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Items from the Merge (Input 1)\nconst itemsToSort = $input.all().map((i, idx) => ({ ...i.json, __origIdx: idx }));\n\n// Items from the \"sorting\" node (no wire needed now, but Merge ensures it ran)\nconst sortedRef = ($items('sorting') || []).map(i => i.json);\n\n// Build lookup from last 4 of หมายเลขคำสั่งซื้อ -> index\nconst positionMap = Object.create(null);\nfor (let i = 0; i < sortedRef.length; i++) {\n  const orderId = String(sortedRef[i]['หมายเลขคำสั่งซื้อ'] ?? '').trim();\n  if (orderId.length >= 4) positionMap[orderId.slice(-4)] = i;\n}\n\n// If multiple codes, take the earliest matching position\nconst matchIndex = (entry) => {\n  const codes = Array.isArray(entry.order_codes) ? entry.order_codes : [];\n  let best = Number.MAX_SAFE_INTEGER;\n  for (const c of codes) {\n    const p = positionMap[String(c).trim()];\n    if (p !== undefined && p < best) best = p;\n  }\n  return best;\n};\n\n// Sort (stable tiebreaker by original index)\nconst sorted = itemsToSort.slice().sort((a, b) => {\n  const pa = matchIndex(a);\n  const pb = matchIndex(b);\n  if (pa !== pb) return pa - pb;\n  return a.__origIdx - b.__origIdx;\n});\n\n// Return original item + JOB. (copied from the matched sorting-row if any)\nreturn sorted.map(j => {\n  const idx = matchIndex(j);\n  const job = (idx !== Number.MAX_SAFE_INTEGER && sortedRef[idx]) ? sortedRef[idx]['JOB.'] : null;\n\n  const { __origIdx, ...rest } = j;\n  return { json: { ...rest, 'JOB.': job } };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9660,
+        140
+      ],
+      "id": "ebd9c860-c40d-473c-b164-bd954f52f895",
+      "name": "Code5",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        9460,
+        240
+      ],
+      "id": "ec8305f5-2e45-4a78-9a2d-8f45116f31e4",
+      "name": "Merge7"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "include": "specifiedFields",
+        "fieldsToInclude": "url",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        10320,
+        140
+      ],
+      "id": "75652e30-83fd-4295-96fb-31baa79a1846",
+      "name": "Aggregate1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a94a0476-4d88-433b-ab90-bf2ae735eb9e",
+              "leftValue": "={{ $json[\"JOB.\"] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        9880,
+        140
+      ],
+      "id": "beeb55d9-ca5d-4932-9fba-8c82e4a4b08c",
+      "name": "Filter1"
+    },
+    {
+      "parameters": {
+        "operation": "Merge PDF",
+        "url": [
+          "={{ (Array.isArray($json) ? ($json[0]?.data ?? []) : ($json?.data ?? [])).map(x => x.url).join(',') }}\n"
+        ],
+        "advancedOptions": {}
+      },
+      "type": "n8n-nodes-pdfco.PDFco Api",
+      "typeVersion": 1,
+      "position": [
+        10540,
+        140
+      ],
+      "id": "19e82a21-d453-4f9d-90a0-b49788ef095b",
+      "name": "merge_pdf1",
+      "credentials": {
+        "pdfcoApi": {
+          "id": "365z8Kq1Iijzburb",
+          "name": "PDF.co account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "={{ \n  'shopee_bom_' +\n  new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Bangkok' })\n    .replace(' ', '_')\n    .replace(/:/g, '-')\n}}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1XBtSo__OHKavi6Qa31ZeAHiuS746VE2s",
+          "mode": "list",
+          "cachedResultName": "done",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1XBtSo__OHKavi6Qa31ZeAHiuS746VE2s"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        11020,
+        160
+      ],
+      "id": "bf36d36c-b455-4147-ab62-a28140f1c5bb",
+      "name": "upload_bom_with_job",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "DcI1STXEFC5nNU24",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ String($json.url).trim() }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        10760,
+        160
+      ],
+      "id": "58548cf8-2031-432b-8832-ae1551533fb3",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "url": "={{ String($json.url).trim() }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        10360,
+        1240
+      ],
+      "id": "74716f40-04ce-411e-a75f-3c75b19cbb7e",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "operation": "deleteFile",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1020,
+        40
+      ],
+      "id": "52afc7da-c51c-4ad6-a768-d7d5b39d4b6a",
+      "name": "Delete a file2",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "DcI1STXEFC5nNU24",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "19GclapMVeWKQJC_Nwqra30ORX1WeTeMs",
+            "mode": "list",
+            "cachedResultName": "processed",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/19GclapMVeWKQJC_Nwqra30ORX1WeTeMs"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1660,
+        140
+      ],
+      "id": "c136833e-8cbe-4658-a6eb-141bcce39a99",
+      "name": "search_previous_files_in_process",
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "DcI1STXEFC5nNU24",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "clear",
+        "documentId": {
+          "__rl": true,
+          "value": "1iZ7ba-vKLmjrI9SkbjfBe2lr0uB1mRPzkfMyAgPq7GQ",
+          "mode": "list",
+          "cachedResultName": "check_today_ordersheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iZ7ba-vKLmjrI9SkbjfBe2lr0uB1mRPzkfMyAgPq7GQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1371054729,
+          "mode": "list",
+          "cachedResultName": "shopee",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iZ7ba-vKLmjrI9SkbjfBe2lr0uB1mRPzkfMyAgPq7GQ/edit#gid=1371054729"
+        },
+        "clear": "specificRows",
+        "startIndex": 2,
+        "rowsToDelete": 100
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -840,
+        180
+      ],
+      "id": "52d00dff-1c32-43e4-9099-e623cd026af0",
+      "name": "Clear sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Yadw0pb5EqVuQBX1",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "865f3ad9-c337-4a97-a226-7078e3aebc31",
+              "leftValue": "={{ Object.keys($json).length > 0 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1400,
+        140
+      ],
+      "id": "2ea5e59e-ba7f-477c-84ec-90f13fbbafe1",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d1f528e5-9e8a-4a17-b177-57befe4e5211",
+              "leftValue": "={{ $json.name }}",
+              "rightValue": "packing_processed",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        8460,
+        120
+      ],
+      "id": "a4e7c3b6-fb6b-45ce-9ab4-a9f3ed225340",
+      "name": "Filter2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { PDFDocument } = require('pdf-lib');\n\nconst results = [];\n\nfor (const item of items) {\n  const binaryData = item.binary.data;\n  const pdfBytes = Buffer.from(binaryData.data, 'base64');\n  const pdfDoc = await PDFDocument.load(pdfBytes);\n  const pageCount = pdfDoc.getPageCount();\n\n  for (let i = 0; i < pageCount; i++) {\n    const newPdf = await PDFDocument.create();\n    const [copiedPage] = await newPdf.copyPages(pdfDoc, [i]);\n    newPdf.addPage(copiedPage);\n    const newPdfBytes = await newPdf.save();\n\n    results.push({\n  json: {\n    fileName: `${item.binary.data.fileName.replace('.pdf', '')}_page${i + 1}.pdf`,\n  },\n  binary: {\n    data: {\n      data: Buffer.from(newPdfBytes).toString('base64'),\n      mimeType: 'application/pdf',\n      fileName: `${item.binary.data.fileName.replace('.pdf', '')}_page${i + 1}.pdf`,\n    },\n  },\n});\n\n  }\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8820,
+        80
+      ],
+      "id": "1669b917-4f23-4acf-9bd1-eb447b072a69",
+      "name": "PDF Separation1"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        8640,
+        -200
+      ],
+      "id": "b94742af-f804-4843-8d6b-c35d1d2cc045",
+      "name": "Download file4",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "DcI1STXEFC5nNU24",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.fileName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1Zx4uJiZ8Ijw8D3p4bkdjks_qd9pbPfUX",
+          "mode": "list",
+          "cachedResultName": "packing_processed",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1Zx4uJiZ8Ijw8D3p4bkdjks_qd9pbPfUX"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        9020,
+        -240
+      ],
+      "id": "a2a8c1db-08e2-47b6-b4ad-3e767dd3d478",
+      "name": "Upload file1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "DcI1STXEFC5nNU24",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        9460,
+        -260
+      ],
+      "id": "c840f3c9-a366-4955-809d-137709477609",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "DcI1STXEFC5nNU24",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-3-5-haiku-20241022",
+          "mode": "list",
+          "cachedResultName": "Claude Haiku 3.5"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        1880,
+        1380
+      ],
+      "id": "2629f3ad-3656-4246-8cc8-b734d7bf30fd",
+      "name": "Anthropic Chat Model3",
+      "credentials": {
+        "anthropicApi": {
+          "id": "NUhLdgj5nMl2e4L6",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-20250514",
+          "cachedResultName": "Claude 4 Sonnet"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        3100,
+        660
+      ],
+      "id": "1c31645e-a2e1-4dff-b733-44d9e449884a",
+      "name": "Anthropic Chat Model4",
+      "credentials": {
+        "anthropicApi": {
+          "id": "NUhLdgj5nMl2e4L6",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteFile",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1180,
+        480
+      ],
+      "id": "eeadbfdd-b2ce-468a-9c54-7b4411bc61d3",
+      "name": "Delete a file3",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "DcI1STXEFC5nNU24",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "865f3ad9-c337-4a97-a226-7078e3aebc31",
+              "leftValue": "={{ Object.keys($json).length > 0 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1480,
+        660
+      ],
+      "id": "6249b534-3f1e-47db-a3c7-d9b3678ec178",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1Zx4uJiZ8Ijw8D3p4bkdjks_qd9pbPfUX",
+            "mode": "list",
+            "cachedResultName": "packing_processed",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1Zx4uJiZ8Ijw8D3p4bkdjks_qd9pbPfUX"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -540,
+        180
+      ],
+      "id": "f2f69cff-14ca-4fad-9244-02bb6d042ab6",
+      "name": "search_previous_files_in_process_packing",
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "DcI1STXEFC5nNU24",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n Code node (JavaScript) — concurrent batches without GCS\nconst { DocumentProcessorServiceClient } = require('@google-cloud/documentai').v1;\nconst client = new DocumentProcessorServiceClient();\n\nconst projectId = 'n8n-doc-464814';\nconst location = 'us';\nconst processorId = 'ede74ddcac09dcd5';\nconst name = `projects/${projectId}/locations/${location}/processors/${processorId}`;\n\nconst BATCH_SIZE = 8;           // try 5–10; adjust to stay under API limits\nconst RETRY_5XX = 2;            // quick resilience for transient errors\n\nfunction extractText(text, textAnchor) {\n  if (!textAnchor?.textSegments?.length) return '';\n  const start = textAnchor.textSegments[0].startIndex || 0;\n  const end = textAnchor.textSegments[0].endIndex;\n  return text.substring(start, end);\n}\n\nasync function processOne(item) {\n  const bin = item.binary?.data;\n  const buffer = Buffer.from(bin.data, 'base64');\n  const encoded = buffer.toString('base64');\n\n  const request = {\n    name,\n    rawDocument: { content: encoded, mimeType: 'application/pdf' },\n  };\n\n  let attempt = 0, lastErr;\n  while (attempt <= RETRY_5XX) {\n    try {\n      const [result] = await client.processDocument(request);\n      const { document } = result;\n      const { text } = document;\n\n      const pageTexts = [];\n      for (const page of (document.pages || [])) {\n        for (const p of (page.paragraphs || [])) {\n          pageTexts.push(extractText(text, p.layout.textAnchor));\n        }\n      }\n\n      return {\n        json: {\n          fileName: bin.fileName,\n          fileId: item.json.id,\n          fullText: text,\n          paragraphs: pageTexts,\n        },\n      };\n    } catch (err) {\n      lastErr = err;\n      // simple retry on 5xx; don’t retry 4xx\n      const code = (err.code || err.status) ?? 0;\n      if (String(code).startsWith('5') && attempt < RETRY_5XX) {\n        await new Promise(r => setTimeout(r, 500 * (attempt + 1)));\n        attempt++;\n      } else {\n        throw err;\n      }\n    }\n  }\n  throw lastErr;\n}\n\nconst out = [];\nfor (let i = 0; i < items.length; i += BATCH_SIZE) {\n  const batch = items.slice(i, i + BATCH_SIZE);\n  const settled = await Promise.allSettled(batch.map(processOne));\n\n  for (let j = 0; j < settled.length; j++) {\n    const res = settled[j];\n    if (res.status === 'fulfilled') out.push(res.value);\n    else {\n      const it = batch[j];\n      out.push({\n        json: {\n          fileName: it.binary?.data?.fileName ?? null,\n          fileId: it.json?.id ?? null,\n          error: res.reason?.message ?? String(res.reason),\n        },\n      });\n    }\n  }\n}\nreturn out;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        700
+      ],
+      "id": "69b4e0c3-936f-4034-a66a-5a56d34636f6",
+      "name": "Google AI Doc2"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "wgkVh0JafcW21yLY",
+          "mode": "list",
+          "cachedResultName": "upload_drive"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        920,
+        1540
+      ],
+      "id": "282c8d0d-1ab2-4b61-9424-edce4814dcf8",
+      "name": "exe_upload_gdrive"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        9240,
+        -160
+      ],
+      "id": "0013c007-6da9-453e-a908-215e8d9e4d94",
+      "name": "merge_extract_from_file"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1480,
+        480
+      ],
+      "id": "8dabf3f5-dbc2-40fa-bb64-2f9151b457e9",
+      "name": "Merge8"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1h4JOg-FJbGLFdoPP1M3u-Dnu_tQ-xap2gTaWd5LOfw0",
+          "mode": "list",
+          "cachedResultName": "ระบบติดตามเอกสารและคำสั่งซื้อ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1h4JOg-FJbGLFdoPP1M3u-Dnu_tQ-xap2gTaWd5LOfw0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('On form submission').first().json['กรุณากรอกชื่อ sheet'] }}",
+          "mode": "name"
+        },
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -1940,
+        140
+      ],
+      "id": "29470e89-ba62-4421-9345-f7319431b322",
+      "name": "check_if_sheet_exist",
+      "executeOnce": true,
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Yadw0pb5EqVuQBX1",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "={{ \n  'shopee_order_' +\n  new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Bangkok' })\n    .replace(' ', '_')\n    .replace(/:/g, '-')\n}}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1XBtSo__OHKavi6Qa31ZeAHiuS746VE2s",
+          "mode": "list",
+          "cachedResultName": "done",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1XBtSo__OHKavi6Qa31ZeAHiuS746VE2s"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        10600,
+        1240
+      ],
+      "id": "51b98dc9-c694-4144-8602-60fa26696934",
+      "name": "upload_orders_with_job",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "DcI1STXEFC5nNU24",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "ตรวจสอบว่าจำนวน order ไม่ตรงกันมีอะไรบ้าง และให้กด approve",
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        10180,
+        900
+      ],
+      "typeVersion": 1,
+      "id": "5eb6e902-af82-48a8-aa04-75b3548ae1ef",
+      "name": "Sticky Note10"
+    }
+  ],
+  "pinData": {
+    "PDFco Api1": [
+      {
+        "json": {
+          "url": "https://pdf-temp-files.s3.us-west-2.amazonaws.com/7F45C1R34D59U9QYZQ9IAIVFLDFPBPH2/14atPTcOjoMeSGd7m1BPTLuW9nUIe0oi-_file_name_SHOPEE-ORDER_page1.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124647Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=c551d5a4828aa4cd9c8d28760f7b91530dca31fa432069c78e7faed5aa8381b1",
+          "outputLinkValidTill": "2025-08-01T13:46:47.579109+00:00",
+          "body": [
+            "https://pdf-temp-files.s3.us-west-2.amazonaws.com/II0UGYW628SCVRH7UCDSBTD87RIFAY6Q/14atPTcOjoMeSGd7m1BPTLuW9nUIe0oi-_file_name_SHOPEE-ORDER_page1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124647Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=6db3b21dddd2c639f6aba4b82a918a9e17a00bbfb061e79e51e8f7b317f77d9e"
+          ],
+          "duration": 79,
+          "name": "14atPTcOjoMeSGd7m1BPTLuW9nUIe0oi-_file_name_SHOPEE-ORDER_page1.json"
+        }
+      },
+      {
+        "json": {
+          "url": "https://pdf-temp-files.s3.us-west-2.amazonaws.com/B543U5DXMEWPJ48DI32RAILFMNDANTMZ/1hibS2iikx1TIY8iqJIFltlHKlhfYQwpD_file_name_SHOPEE-ORDER_page2.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124656Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=9a25daac3300684acdc865e8b60bcf636a14a7e931646a2489708d62356cb14c",
+          "outputLinkValidTill": "2025-08-01T13:46:56.516652+00:00",
+          "body": [
+            "https://pdf-temp-files.s3.us-west-2.amazonaws.com/K25B8Q4WE6NLYUZIZ1ZYVRXHLEWFHWZK/1hibS2iikx1TIY8iqJIFltlHKlhfYQwpD_file_name_SHOPEE-ORDER_page2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124656Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=88f19eecf8ba8648e015f141b2d050a46d6d095739d01bce94d6f986f2cbfdae"
+          ],
+          "duration": 123,
+          "name": "1hibS2iikx1TIY8iqJIFltlHKlhfYQwpD_file_name_SHOPEE-ORDER_page2.json"
+        }
+      },
+      {
+        "json": {
+          "url": "https://pdf-temp-files.s3.us-west-2.amazonaws.com/5SKXJ28UOH34LKUZQFL965RH93ELHGWR/1oWwkvb64uamtaQz3ir4yxJT66Tq-hSp8_file_name_SHOPEE-ORDER_page3.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124700Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=2acd0749a8ef4ff2f9fbba5e7396f7badb0911d2c1182c819957139ebacdfa7f",
+          "outputLinkValidTill": "2025-08-01T13:47:00.077975+00:00",
+          "body": [
+            "https://pdf-temp-files.s3.us-west-2.amazonaws.com/E7B91FPHX1EGEG7OARUU3H88XACOIA01/1oWwkvb64uamtaQz3ir4yxJT66Tq-hSp8_file_name_SHOPEE-ORDER_page3.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124659Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=11eb75caddf673dc331ca06d15344a86b9c337c6ec68f41f1198cef7eb6bec82"
+          ],
+          "duration": 83,
+          "name": "1oWwkvb64uamtaQz3ir4yxJT66Tq-hSp8_file_name_SHOPEE-ORDER_page3.json"
+        }
+      },
+      {
+        "json": {
+          "url": "https://pdf-temp-files.s3.us-west-2.amazonaws.com/A6U6FHTYRBA8YS8MTOGQRA6HOPBG0ACK/1saXPms0G7ixsV2WkVKJLYqw0NrI19Mnt_file_name_SHOPEE-ORDER_page4.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124703Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=ea16bfd6d3bcd88e3c738a2c689bb22d61c5a60a7e2d27892e7e74269f9cf7bc",
+          "outputLinkValidTill": "2025-08-01T13:47:03.844783+00:00",
+          "body": [
+            "https://pdf-temp-files.s3.us-west-2.amazonaws.com/1MUBAQTVV7OUBNQ1CM99I4OJ6OHH4W2Y/1saXPms0G7ixsV2WkVKJLYqw0NrI19Mnt_file_name_SHOPEE-ORDER_page4.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124703Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=92f050c4707014e66955d9c3fd75c52047ea200c5ddd83a4e211469b89b9f087"
+          ],
+          "duration": 81,
+          "name": "1saXPms0G7ixsV2WkVKJLYqw0NrI19Mnt_file_name_SHOPEE-ORDER_page4.json"
+        }
+      },
+      {
+        "json": {
+          "url": "https://pdf-temp-files.s3.us-west-2.amazonaws.com/2I90INTCFFITWJZT24PQJ5VMAIAGZST9/1lEWk2MQ3QJz8wQgFkQuLd_9XGQkdxDLd_file_name_SHOPEE-ORDER_page5.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124707Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=60e99c620ecd7a6ce5a8c3db4b94b3346e8c451e1a5da20a4b6de31cdaae7656",
+          "outputLinkValidTill": "2025-08-01T13:47:07.62667+00:00",
+          "body": [
+            "https://pdf-temp-files.s3.us-west-2.amazonaws.com/HQCFKX3VG8MYOT5D2SY9NALW6WCE6RQN/1lEWk2MQ3QJz8wQgFkQuLd_9XGQkdxDLd_file_name_SHOPEE-ORDER_page5.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124707Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=92a007dfb775ec59e2a33520c28525b8b0a3573b0bfe3c9981e74ca779dacbf7"
+          ],
+          "duration": 82,
+          "name": "1lEWk2MQ3QJz8wQgFkQuLd_9XGQkdxDLd_file_name_SHOPEE-ORDER_page5.json"
+        }
+      },
+      {
+        "json": {
+          "url": "https://pdf-temp-files.s3.us-west-2.amazonaws.com/3K7DLHF2IKF7KCTFCUDV76T0XST7IVAX/1BlmClvLEE27Sjeb7TWAL5u7Ybr7BTbqR_file_name_SHOPEE-ORDER_page6.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124716Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=d11489c8a01465ddfac85e79760523a0b960eda48ec7b3cea1a6bb8dda5ada27",
+          "outputLinkValidTill": "2025-08-01T13:47:16.677745+00:00",
+          "body": [
+            "https://pdf-temp-files.s3.us-west-2.amazonaws.com/XAGGDE4FRO7SGUUNOQ9047KATPPLBPTC/1BlmClvLEE27Sjeb7TWAL5u7Ybr7BTbqR_file_name_SHOPEE-ORDER_page6.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124716Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=1ce9217c8bf42275205444e6fd4b55e89331ae1d13247cc182df550d7a71e384"
+          ],
+          "duration": 94,
+          "name": "1BlmClvLEE27Sjeb7TWAL5u7Ybr7BTbqR_file_name_SHOPEE-ORDER_page6.json"
+        }
+      },
+      {
+        "json": {
+          "url": "https://pdf-temp-files.s3.us-west-2.amazonaws.com/571NX2086C9YV9AUKLEKMNW0A6LC3EO2/1RJdFwrxv4AHcWdE5Wq9VhgqwjUaD2elF_file_name_SHOPEE-ORDER_page7.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124720Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=f1fbbda001486d9567e10a4e123873deed94c579afc1f4c697dddf716f6f763d",
+          "outputLinkValidTill": "2025-08-01T13:47:20.89126+00:00",
+          "body": [
+            "https://pdf-temp-files.s3.us-west-2.amazonaws.com/BUEYCBS5MYOH5QM1PPT73VTJAP1KWQIS/1RJdFwrxv4AHcWdE5Wq9VhgqwjUaD2elF_file_name_SHOPEE-ORDER_page7.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124720Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=791dcf2e9d0b3d073a77d2717703ee3306a26c820640bb8a3ae1f07f27a8d29a"
+          ],
+          "duration": 141,
+          "name": "1RJdFwrxv4AHcWdE5Wq9VhgqwjUaD2elF_file_name_SHOPEE-ORDER_page7.json"
+        }
+      },
+      {
+        "json": {
+          "url": "https://pdf-temp-files.s3.us-west-2.amazonaws.com/TAK1WWFIZWL3SKUHOCXE51IY6JWDGQP0/1Dpjf0iRoWnVBgXTCuOItgciGEcHAw0jQ_file_name_SHOPEE-ORDER_page8.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124725Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=fa85c7f7111e0b55c190d89d4592c18b2b57c99ea7bd976baf54846732bfb559",
+          "outputLinkValidTill": "2025-08-01T13:47:25.031223+00:00",
+          "body": [
+            "https://pdf-temp-files.s3.us-west-2.amazonaws.com/M4UGKS0KZTXLY8FLIVMYCTUSLA70ZUZG/1Dpjf0iRoWnVBgXTCuOItgciGEcHAw0jQ_file_name_SHOPEE-ORDER_page8.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124724Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=21c1e68241becedcf37625b29d1b52c531d5c5487a01da30fb7776c216d79f77"
+          ],
+          "duration": 87,
+          "name": "1Dpjf0iRoWnVBgXTCuOItgciGEcHAw0jQ_file_name_SHOPEE-ORDER_page8.json"
+        }
+      },
+      {
+        "json": {
+          "url": "https://pdf-temp-files.s3.us-west-2.amazonaws.com/3STRAWTVX30M6CDQFTRRE9EMK4DQEM4X/1PXkRzLA-kkKQU2QqnpCVWJvT0XFfihll_file_name_SHOPEE-ORDER_page9.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124735Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=fa106e7d03d918f29643690614495c062ea46548f30d021b4f12d7a52268df99",
+          "outputLinkValidTill": "2025-08-01T13:47:35.272468+00:00",
+          "body": [
+            "https://pdf-temp-files.s3.us-west-2.amazonaws.com/9ON6NUQLZDSK99JBP1JE2J5FQ4AHQNYH/1PXkRzLA-kkKQU2QqnpCVWJvT0XFfihll_file_name_SHOPEE-ORDER_page9.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124735Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=58659fb611bc19094291d0e2278fac25e8a54f0fb2cdaf0a2333beee96626c0e"
+          ],
+          "duration": 77,
+          "name": "1PXkRzLA-kkKQU2QqnpCVWJvT0XFfihll_file_name_SHOPEE-ORDER_page9.json"
+        }
+      },
+      {
+        "json": {
+          "url": "https://pdf-temp-files.s3.us-west-2.amazonaws.com/LAQBO6GK0J4U79I7K3202UOZSKRNRQLB/1T1E0iamL4LtPIKrqQtYoN5KZCRAuIZeD_file_name_SHOPEE-ORDER_page10.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124744Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=3a13873300701910bdd65d07a7d9e726c513f3c0b074a4277be7723585e001c7",
+          "outputLinkValidTill": "2025-08-01T13:47:44.14997+00:00",
+          "body": [
+            "https://pdf-temp-files.s3.us-west-2.amazonaws.com/8WVN9M7SICK9LOQFMS8KRKG7J09UK9RX/1T1E0iamL4LtPIKrqQtYoN5KZCRAuIZeD_file_name_SHOPEE-ORDER_page10.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124744Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=727f97231a76a01b003b838cb6a6b625a48fc4c653ef7a4691b8d79f5d2f6985"
+          ],
+          "duration": 126,
+          "name": "1T1E0iamL4LtPIKrqQtYoN5KZCRAuIZeD_file_name_SHOPEE-ORDER_page10.json"
+        }
+      },
+      {
+        "json": {
+          "url": "https://pdf-temp-files.s3.us-west-2.amazonaws.com/XJJMCLA5UI3HPZZ9CZSG1DH2XHF8AQ6O/1m86YBn0xJJFH9KrlPvtfMm--2fILLDda_file_name_SHOPEE-ORDER_page11.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124753Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=6fddf21ca265e57abaa7197a4fecdd48653ba50fcc5c494afc7bb2344211de0f",
+          "outputLinkValidTill": "2025-08-01T13:47:53.688191+00:00",
+          "body": [
+            "https://pdf-temp-files.s3.us-west-2.amazonaws.com/3K1D5NS1ARU7EGOWVUBN8DFU6HRCLUN9/1m86YBn0xJJFH9KrlPvtfMm--2fILLDda_file_name_SHOPEE-ORDER_page11.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124753Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=d93ea752afe9671807ca319f0d3b265ae68113bcce5c7ad0d5cfe1ff79b92a17"
+          ],
+          "duration": 93,
+          "name": "1m86YBn0xJJFH9KrlPvtfMm--2fILLDda_file_name_SHOPEE-ORDER_page11.json"
+        }
+      },
+      {
+        "json": {
+          "url": "https://pdf-temp-files.s3.us-west-2.amazonaws.com/Q901CF32W0Q8TF756VQVUT3V4IG2ZC0A/1yIG02Yq5FjpxW6IdczQTm4vfuWrdPMp3_file_name_SHOPEE-ORDER_page12.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124803Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=a4cc00e21ba4bcc164ddb91d5ae9573cfcc999adaa5387aa0a6fb9f32b55e88e",
+          "outputLinkValidTill": "2025-08-01T13:48:03.421399+00:00",
+          "body": [
+            "https://pdf-temp-files.s3.us-west-2.amazonaws.com/QT45UO1BBTLNH5JF5XJ75C9JWQVTKWMA/1yIG02Yq5FjpxW6IdczQTm4vfuWrdPMp3_file_name_SHOPEE-ORDER_page12.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124803Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=29da954654ea8a7ba8cd82670ea227fae4e3195f0f5b7701b10d7aafedac0b72"
+          ],
+          "duration": 86,
+          "name": "1yIG02Yq5FjpxW6IdczQTm4vfuWrdPMp3_file_name_SHOPEE-ORDER_page12.json"
+        }
+      },
+      {
+        "json": {
+          "url": "https://pdf-temp-files.s3.us-west-2.amazonaws.com/TM3T9ZQH5LQWIAEAP5LB5RI9NJYWLEOC/1iqsg_YlOjrekt1Zy8B8hSAOMYOphMIiu_file_name_SHOPEE-ORDER_page13.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124812Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=c1d838c863791c5c08b3d0f817ca152e323414cfdf4ab77894135cd29068edaf",
+          "outputLinkValidTill": "2025-08-01T13:48:12.985587+00:00",
+          "body": [
+            "https://pdf-temp-files.s3.us-west-2.amazonaws.com/W23VT4CKY2K3QSLDXFRO44EXYA51Y7HG/1iqsg_YlOjrekt1Zy8B8hSAOMYOphMIiu_file_name_SHOPEE-ORDER_page13.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124812Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=4facad4798e841f4ca003fcac593a354ca0e138ba318f289bd8b4d21ba988bad"
+          ],
+          "duration": 80,
+          "name": "1iqsg_YlOjrekt1Zy8B8hSAOMYOphMIiu_file_name_SHOPEE-ORDER_page13.json"
+        }
+      },
+      {
+        "json": {
+          "url": "https://pdf-temp-files.s3.us-west-2.amazonaws.com/XJ8RV01JDBMWJLUFDMBHHEW5I25WNK8B/1n7x9PWd0PvOk0Iysg2_m5OSPxed6ZYlb_file_name_SHOPEE-ORDER_page14.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124816Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=89202cd8d89c6b36a83bbd3886d4bdc7906c0ba6e2bc981e23219d981068c5b8",
+          "outputLinkValidTill": "2025-08-01T13:48:16.715728+00:00",
+          "body": [
+            "https://pdf-temp-files.s3.us-west-2.amazonaws.com/YG1EQ90GUU4JBOY9JKRNXVEXDCK4EZLG/1n7x9PWd0PvOk0Iysg2_m5OSPxed6ZYlb_file_name_SHOPEE-ORDER_page14.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124816Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=59443bc4948eefce179c23d87f1e9db70cbe3f7e6746099b1b8df7083570bd79"
+          ],
+          "duration": 82,
+          "name": "1n7x9PWd0PvOk0Iysg2_m5OSPxed6ZYlb_file_name_SHOPEE-ORDER_page14.json"
+        }
+      },
+      {
+        "json": {
+          "url": "https://pdf-temp-files.s3.us-west-2.amazonaws.com/8ES27YUG23XAKUI32QGPBJJ0K7B6AI19/12HtnFBRM783BmxTCrSzPm6AYOo3vfwjB_file_name_SHOPEE-ORDER_page15.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124820Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=33aeae2e0ecccdeb15b43f80493646677b2d20c1f051f6a8d263309c4ceb7f1f",
+          "outputLinkValidTill": "2025-08-01T13:48:20.408189+00:00",
+          "body": [
+            "https://pdf-temp-files.s3.us-west-2.amazonaws.com/SKD2JVC4LYYKG24NRXQCV8N2UT4FA9TF/12HtnFBRM783BmxTCrSzPm6AYOo3vfwjB_file_name_SHOPEE-ORDER_page15.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124820Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=36a85afc813fba1fb941775a0af8ebca1932abc42818d56996cee2fb9b5d60ed"
+          ],
+          "duration": 122,
+          "name": "12HtnFBRM783BmxTCrSzPm6AYOo3vfwjB_file_name_SHOPEE-ORDER_page15.json"
+        }
+      },
+      {
+        "json": {
+          "url": "https://pdf-temp-files.s3.us-west-2.amazonaws.com/JU13CR7HM39XRLMIXYFSNXBN72CZMV4L/1FeS7IiZ9B6kfrAjP6dajrqDuI6e73Qzs_file_name_SHOPEE-ORDER_page16.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124830Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=66aeac2358ddd51755367c9a03d1ff4cdffa0067d0962df4ab12e5f9510d9282",
+          "outputLinkValidTill": "2025-08-01T13:48:30.004962+00:00",
+          "body": [
+            "https://pdf-temp-files.s3.us-west-2.amazonaws.com/P93EYP44B3A7VQ59Z5K2XAJU3S1HI9DP/1FeS7IiZ9B6kfrAjP6dajrqDuI6e73Qzs_file_name_SHOPEE-ORDER_page16.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124829Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=b06e4a9cb369d8960be709f05148b9816b7f482cdda1999a3db88a46a691816a"
+          ],
+          "duration": 169,
+          "name": "1FeS7IiZ9B6kfrAjP6dajrqDuI6e73Qzs_file_name_SHOPEE-ORDER_page16.json"
+        }
+      },
+      {
+        "json": {
+          "url": "https://pdf-temp-files.s3.us-west-2.amazonaws.com/CU1RFH3XWWYSBYE1EHOF0Q5R41IYE396/1pq5ivrZDOKISY3FuoXjtm3zDU3X7M-EU_file_name_SHOPEE-ORDER_page17.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124839Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=8769bd53b73a405e44c64fc130d4579e13faecf6e5b595e0df0d5b3c30f2d6fb",
+          "outputLinkValidTill": "2025-08-01T13:48:39.754896+00:00",
+          "body": [
+            "https://pdf-temp-files.s3.us-west-2.amazonaws.com/218G0IZWGT31Y1TF1M1F3Q4H1OXSEMAH/1pq5ivrZDOKISY3FuoXjtm3zDU3X7M-EU_file_name_SHOPEE-ORDER_page17.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124839Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=893fe137423a44dd636848dc7a36a4c5d75ba5a0476fe2f2eb68b8ccc7942e28"
+          ],
+          "duration": 88,
+          "name": "1pq5ivrZDOKISY3FuoXjtm3zDU3X7M-EU_file_name_SHOPEE-ORDER_page17.json"
+        }
+      },
+      {
+        "json": {
+          "url": "https://pdf-temp-files.s3.us-west-2.amazonaws.com/BBMEYS0M8EW0Z8BC3B559LOJNY14IORM/1ic1XfO25IFqQMkYspr7CDdcOr_nmPA7l_file_name_SHOPEE-ORDER_page18.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124912Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=54ef3452d1eea9df8b41832b56446f0f9adde75d1eb9e8bb9ee33251e72064e4",
+          "outputLinkValidTill": "2025-08-01T13:49:12.933075+00:00",
+          "body": [
+            "https://pdf-temp-files.s3.us-west-2.amazonaws.com/5F3019YQS5FDIQ54KZUP5FOIU63S0LTK/1ic1XfO25IFqQMkYspr7CDdcOr_nmPA7l_file_name_SHOPEE-ORDER_page18.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124912Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=6b5d422edf3f77dadf7a02f137ba24fb989542e892566d559d1b52c18588dca9"
+          ],
+          "duration": 84,
+          "name": "1ic1XfO25IFqQMkYspr7CDdcOr_nmPA7l_file_name_SHOPEE-ORDER_page18.json"
+        }
+      },
+      {
+        "json": {
+          "url": "https://pdf-temp-files.s3.us-west-2.amazonaws.com/DJ382DZX5DUI58K3CRU7PNGTSSFEAJ84/1s0lLteHMy1gEvMJ5QpVE6cfJ82xg-pHP_file_name_SHOPEE-ORDER_page19.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124946Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=d9e076fefb8d53ad37a5602aaa8258a0b313cd095c6778c14489ebbe696e1a3c",
+          "outputLinkValidTill": "2025-08-01T13:49:46.748664+00:00",
+          "body": [
+            "https://pdf-temp-files.s3.us-west-2.amazonaws.com/5P6FWZNSLQLCUVZ83CEH0ZUS8ZQUD8SL/1s0lLteHMy1gEvMJ5QpVE6cfJ82xg-pHP_file_name_SHOPEE-ORDER_page19.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124946Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=981417932b85374f0cf45382abfe0c46759d2bed5c038cc3cca061252895199c"
+          ],
+          "duration": 83,
+          "name": "1s0lLteHMy1gEvMJ5QpVE6cfJ82xg-pHP_file_name_SHOPEE-ORDER_page19.json"
+        }
+      },
+      {
+        "json": {
+          "url": "https://pdf-temp-files.s3.us-west-2.amazonaws.com/VBPJYYZD1ZTQOELFW3IUS5V7VXST5NU2/1FgUAtudEjfcEnhWI6XOw-3LYa0oCbgLN_file_name_SHOPEE-ORDER_page20.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124951Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=ce19c3b4bf30dbd679b9ec4a8486cf73cae4f8f350aa7917eecf1a323d8dddc7",
+          "outputLinkValidTill": "2025-08-01T13:49:51.211744+00:00",
+          "body": [
+            "https://pdf-temp-files.s3.us-west-2.amazonaws.com/HRLVTCXZHHZ3B8I8B5JGWCWSYTVZX696/1FgUAtudEjfcEnhWI6XOw-3LYa0oCbgLN_file_name_SHOPEE-ORDER_page20.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T124951Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=89cf2290ff548ad1dd0d26e8b1899c4c32dd2fa4c38098c7d8ead9685330ac53"
+          ],
+          "duration": 98,
+          "name": "1FgUAtudEjfcEnhWI6XOw-3LYa0oCbgLN_file_name_SHOPEE-ORDER_page20.json"
+        }
+      },
+      {
+        "json": {
+          "url": "https://pdf-temp-files.s3.us-west-2.amazonaws.com/JLCOC9YZ4L3GL4WV4WR4MCT24V2GQMT7/1FwxmHgst05TlDssi6Y-s9RC-YsEA4rFX_file_name_SHOPEE-ORDER_page21.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T125000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=e62b34e0aa2b4a3f7dc93596c0312e4ab223fff04c2beb3b7ee51d9dcf4a9dc6",
+          "outputLinkValidTill": "2025-08-01T13:50:00.486002+00:00",
+          "body": [
+            "https://pdf-temp-files.s3.us-west-2.amazonaws.com/BYEX2QIN2BWJPA1WJZP8AVBPD5C7R4Q8/1FwxmHgst05TlDssi6Y-s9RC-YsEA4rFX_file_name_SHOPEE-ORDER_page21.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T125000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=3688e828090c532badd21e012f45a4bd2babc1d1496c39715b2235951aaac68f"
+          ],
+          "duration": 81,
+          "name": "1FwxmHgst05TlDssi6Y-s9RC-YsEA4rFX_file_name_SHOPEE-ORDER_page21.json"
+        }
+      },
+      {
+        "json": {
+          "url": "https://pdf-temp-files.s3.us-west-2.amazonaws.com/JTM1Q7FHGU2K561ICX26Z7U2ZO1U1I96/1CKoRH0E0MYjt4I7BXoJV750lAcr5Kbxq_file_name_SHOPEE-ORDER_page22.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T125004Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=4f629ccfade69ad8e7154507dcff8e49fde8c290d183c24bfe56b1d58474f0ef",
+          "outputLinkValidTill": "2025-08-01T13:50:04.383145+00:00",
+          "body": [
+            "https://pdf-temp-files.s3.us-west-2.amazonaws.com/OM2UMJMZQ7SOMY58VP6WYRWS09H8YXIZ/1CKoRH0E0MYjt4I7BXoJV750lAcr5Kbxq_file_name_SHOPEE-ORDER_page22.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIZJDPLX6D7EHVCKA%2F20250801%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250801T125004Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=80d66f7314d62b1da3b630a4ed85b0c0c190ee9f33cbe0d8d8681be7a98b2971"
+          ],
+          "duration": 91,
+          "name": "1CKoRH0E0MYjt4I7BXoJV750lAcr5Kbxq_file_name_SHOPEE-ORDER_page22.json"
+        }
+      }
+    ],
+    "Analyze image": [
+      {
+        "json": {
+          "content": "{\n  \"file_id\": \"14atPTcOjoMeSGd7m1BPTLuW9nUIe0oi-_file_name_SHOPEE-ORDER_page1.json\",\n  \"shipping_company\": \"BEST EXPRESS\",\n  \"shopee_order_no\": \"250724147GT276\",\n  \"product_name_thai\": [\n    \"Kefva ชั้นเหล็กอเนกประสงค์ ชั้นวางน้ำมันเครื่อง หลังคาข่าย 4 ชั้น ขนาด 30x50x150 cm\"\n  ]\n}"
+        }
+      },
+      {
+        "json": {
+          "content": "{\n  \"file_id\": \"1hibS2iikx1TIY8iqJIFltlHKlhfYQwpD_file_name_SHOPEE-ORDER_page2.json\",\n  \"shipping_company\": \"BEST EXPRESS\",\n  \"shopee_order_no\": \"25072414CMUUX1\",\n  \"product_name_thai\": [\n    \"Kefva ชั้นวางสินค้ามินิมาร์ท 4 ชั้น หน้าเดี่ยว หลังคาข่าย สูง 120-150 cm รุ่น Laser Diamond 40kg (แถมฟรี: กั้นตก+กั้นเท้า)\"\n  ]\n}"
+        }
+      },
+      {
+        "json": {
+          "content": "{\n  \"file_id\": \"1oWwkvb64uamtaQz3ir4yxJT66Tq-hSp8_file_name_SHOPEE-ORDER_page3.json\",\n  \"shipping_company\": \"BEST EXPRESS\",\n  \"shopee_order_no\": \"25072414K1XS9G\",\n  \"product_name_thai\": [\n    \"Kefva ชั้นเหล็กอเนกประสงค์ ชั้นวางน้ำมันเครื่อง หลังขาชาย 4 ชั้น ขนาด 30x50x150 cm\"\n  ]\n}"
+        }
+      },
+      {
+        "json": {
+          "content": "{\n  \"file_id\": \"1saXPms0G7ixsV2WkVKJLYqw0NrI19Mnt_file_name_SHOPEE-ORDER_page4.json\",\n  \"shipping_company\": \"BEST EXPRESS\",\n  \"shopee_order_no\": \"25072414KG5X94\",\n  \"product_name_thai\": [\n    \"ชั้นเหล็กอเนกประสงค์ ชั้นวางน้ำมันเครื่อง หลังตาข่าย 4 ชั้น ขนาด 30x50x150 cm\"\n  ]\n}"
+        }
+      },
+      {
+        "json": {
+          "content": "{\n  \"file_id\": \"1lEWk2MQ3QJz8wQgFkQuLd_9XGQkdxDLd_file_name_SHOPEE-ORDER_page5.json\",\n  \"shipping_company\": \"BEST EXPRESS\",\n  \"shopee_order_no\": \"25072414U959CE\",\n  \"product_name_thai\": [\n    \"Kefva ชั้นเหล็กอเนกประสงค์ ชั้นวางน้ำมันเครื่อง หลังถาข่าย 4 ชั้น ขนาด 30x50x150 cm\"\n  ]\n}"
+        }
+      },
+      {
+        "json": {
+          "content": "{\n  \"file_id\": \"1BlmClvLEE27Sjeb7TWAL5u7Ybr7BTbqR_file_name_SHOPEE-ORDER_page6.json\",\n  \"shipping_company\": \"BEST EXPRESS\",\n  \"shopee_order_no\": \"25072414Y0BVM5\",\n  \"product_name_thai\": [\n    \"Kefva ชั้นเหล็กอเนกประสงค์ ชั้นวางน้ำมันเครื่อง หลังคาชาย 4 ชั้น ขนาด 30x50x150 cm\"\n  ]\n}"
+        }
+      },
+      {
+        "json": {
+          "content": "{\n  \"file_id\": \"1RJdFwrxv4AHcWdE5Wq9VhgqwjUaD2elF_file_name_SHOPEE-ORDER_page7.json\",\n  \"shipping_company\": \"BEST EXPRESS\",\n  \"shopee_order_no\": \"25072417RH5KFJ\",\n  \"product_name_thai\": [\n    \"Kefva ชั้นวางขวดน้ำมัน ชั้นวางขวด 4ชั้น มีล้อ ขนาด44x44x96cm ชั้นวางน้ำมันแน่งหาย ชั้นวางขวดน้ำอัดลม ...\"\n  ]\n}"
+        }
+      },
+      {
+        "json": {
+          "content": "{\n  \"file_id\": \"1Dpjf0iRoWnVBgXTCuOItgciGEcHAw0jQ_file_name_SHOPEE-ORDER_page8.json\",\n  \"shipping_company\": \"BEST EXPRESS\",\n  \"shopee_order_no\": \"25072419UKXK0FE\",\n  \"product_name_thai\": [\n    \"Kefva ชั้นวางหม้อดไฟ 2ระดับ ขนาด45x70x100cm ที่วางของด้านยาว ชั้นโชว์หลอดLED ชั้นวางฟินเจอร์บอร์ด ชั้นวางของ…\"\n  ]\n}"
+        }
+      },
+      {
+        "json": {
+          "content": "{\n  \"file_id\": \"1PXkRzLA-kkKQU2QqnpCVWJvT0XFfihll_file_name_SHOPEE-ORDER_page9.json\",\n  \"shipping_company\": \"BEST EXPRESS\",\n  \"shopee_order_no\": \"2507241CK9J8KV\",\n  \"product_name_thai\": [\n    \"Kefva ชั้นวางขวดน้ำมัน ชั้นวางขวด 4ชิ้น มีล้อ ขนาด44x44x96cm ชั้นวางน้ำมันแน่งดาย ชั้นวางขวดน้ําอัดลม ...\"\n  ]\n}"
+        }
+      },
+      {
+        "json": {
+          "content": "{\n  \"file_id\": \"1T1E0iamL4LtPIKrqQtYoN5KZCRAuIZeD_file_name_SHOPEE-ORDER_page10.json\",\n  \"shipping_company\": \"BEST EXPRESS\",\n  \"shopee_order_no\": \"2507241VD4ABQR\",\n  \"product_name_thai\": [\n    \"Kefva โครงชั้นวางสินค้ามินิมาร์ท 1 ชั้นฐาน หน้าเดียว ชุดต้นหลังทึบ สูง 120-180 cm รุ่น Laser Diamond รับนน. 40kg/ชั้น\"\n  ]\n}"
+        }
+      },
+      {
+        "json": {
+          "content": "{\n  \"file_id\": \"1m86YBn0xJJFH9KrlPvtfMm--2fILLDda_file_name_SHOPEE-ORDER_page11.json\",\n  \"shipping_company\": \"SPX EXPRESS\",\n  \"shopee_order_no\": \"25072525U9KHQ2\",\n  \"product_name_thai\": [\n    \"Kefva ลูกเป้งPP ลวดหนา5mm ตะขอแขวนสินค้า ขนาด10-30cm 10ชิ้น/แพ็ค ลูก hook แขวน ลูกเหล็กกุ๊ปโครเมียม เกี่ยว…\"\n  ]\n}"
+        }
+      },
+      {
+        "json": {
+          "content": "{\n  \"file_id\": \"1yIG02Yq5FjpxW6IdczQTm4vfuWrdPMp3_file_name_SHOPEE-ORDER_page12.json\",\n  \"shipping_company\": \"BEST EXPRESS\",\n  \"shopee_order_no\": \"2507252626U96A\",\n  \"product_name_thai\": [\n    \"Kefva ตะแกรงเหล็ก ชั้นแขวนสินค้า รุ่นไม่มีล้อ ชั้นแขวนลูก แผงโชว์ ตะแกรงแขวนของขาย ตาข่ายแขวน สแตนโชว์ ราวห้อย…\"\n  ]\n}"
+        }
+      },
+      {
+        "json": {
+          "content": "{\n  \"file_id\": \"1iqsg_YlOjrekt1Zy8B8hSAOMYOphMIiu_file_name_SHOPEE-ORDER_page13.json\",\n  \"shipping_company\": \"BEST EXPRESS\",\n  \"shopee_order_no\": \"25072529BRSVWB\",\n  \"product_name_thai\": [\n    \"Kefva ชั้นตะกร้ามินิทรัท 4 ชั้น มือถือ รุ่น Robust ขนาดหน้านกว้าง 90 cm เซลฟีขาวขนม ขายของชำ สินค้าเบ็ดเตล็ด\"\n  ]\n}"
+        }
+      },
+      {
+        "json": {
+          "content": "{\n  \"file_id\": \"1n7x9PWd0PvOk0Iysg2_m5OSPxed6ZYlb_file_name_SHOPEE-ORDER_page14.json\",\n  \"shipping_company\": \"BEST EXPRESS\",\n  \"shopee_order_no\": \"2507252721CW8F\",\n  \"product_name_thai\": [\n    \"Kefva ชั้นวางสินค้าแบบชั้นบันได 3 ชั้น ขนาด100x120x120cm ชั้นเหล็ก ชั้นวางของขาหน้าร้านค้า ชั้นโชว์สินค้า ชั้นชั้นบันได\"\n  ]\n}"
+        }
+      },
+      {
+        "json": {
+          "content": "{\n  \"file_id\": \"12HtnFBRM783BmxTCrSzPm6AYOo3vfwjB_file_name_SHOPEE-ORDER_page15.json\",\n  \"shipping_company\": \"BEST EXPRESS\",\n  \"shopee_order_no\": \"2507252721CW8F\",\n  \"product_name_thai\": [\n    \"Kefva กระชะโย้วีนสินค้า 2 ชั้น พับได้ 70x120x75 cm วาง+แขวนสินค้า 2in1 กระชะใส่ของ วางสินค้าเซลล์\"\n  ]\n}"
+        }
+      },
+      {
+        "json": {
+          "content": "{\n  \"file_id\": \"1FeS7IiZ9B6kfrAjP6dajrqDuI6e73Qzs_file_name_SHOPEE-ORDER_page16.json\",\n  \"shipping_company\": \"BEST EXPRESS\",\n  \"shopee_order_no\": \"2507252AVQMAAC\",\n  \"product_name_thai\": [\n    \"Kefva ชั้นวางสินค้านีออนรัท 4 ชั้น หน้าเดี่ยว หลังตาข่าย สูง 120-150 cm รุ่น Laser Diamond 40kg (แถมฟรี: กันตก+กันเท้า)\"\n  ]\n}"
+        }
+      },
+      {
+        "json": {
+          "content": "{\n  \"file_id\": \"1pq5ivrZDOKISY3FuoXjtm3zDU3X7M-EU_file_name_SHOPEE-ORDER_page17.json\",\n  \"shipping_company\": \"BEST EXPRESS\",\n  \"shopee_order_no\": \"2507252AVQMAAC\",\n  \"product_name_thai\": [\n    \"Kefva ลูกเป้าปูพื้นPP ลวดหนา5mm ตะขอแขวนสินค้า ขนาด10-30cm 10ชิ้น/แพ็ค ขูด hook แขวน ลูกเหล็กชุบโครเมี่ยม เกี่ยว…\"\n  ]\n}"
+        }
+      },
+      {
+        "json": {
+          "content": "{\n  \"file_id\": \"1ic1XfO25IFqQMkYspr7CDdcOr_nmPA7l_file_name_SHOPEE-ORDER_page18.json\",\n  \"shipping_company\": \"SPX EXPRESS\",\n  \"shopee_order_no\": \"2507253552D7S5\",\n  \"product_name_thai\": [\n    \"Kefva ลูกแก้วPP ลวดหนา15mm ตะขอแขวนสินค้า ขนาด10-30cm 10ชิ้น/แพ็ค ลูก hook แขวน ลูกเหล็กสูญโครเมี่ยม เกี่ยว...\",\n    \"Kefva ลูกแก้วPP ลวดหนา15mm ตะขอแขวนสินค้า ขนาด10-30cm 10ชิ้น/แพ็ค ลูก hook แขวน ลูกเหล็กสูญโครเมี่ยม เกี่ยว...\"\n  ]\n}"
+        }
+      },
+      {
+        "json": {
+          "content": "{\n  \"file_id\": \"1s0lLteHMy1gEvMJ5QpVE6cfJ82xg-pHP_file_name_SHOPEE-ORDER_page19.json\",\n  \"shipping_company\": \"BEST EXPRESS\",\n  \"shopee_order_no\": \"250725319BRA2F\",\n  \"product_name_thai\": [\n    \"Kefva ชั้นวางขวดน้ำมันวางขวด 4ชิ้น มีล้อ ขนาด44x44x96cm ชั้นวางน้ำมันแน่นงาย ชั้นวางขวดน้ำอัดลม ...\"\n  ]\n}"
+        }
+      },
+      {
+        "json": {
+          "content": "{\n  \"file_id\": \"1FgUAtudEjfcEnhWI6XOw-3LYa0oCbgLN_file_name_SHOPEE-ORDER_page20.json\",\n  \"shipping_company\": \"BEST EXPRESS\",\n  \"shopee_order_no\": \"250725337YBCC0\",\n  \"product_name_thai\": [\n    \"Kefva ชั้นตะแกรงวางสินค้a 3-4 ชั้น ชั้นวางบนเคาน์เตอร์ แบบขั้นบันได กว้าง 35-50 cm ชั้นวางน้ำหอม วางขนม ครีมซอง\"\n  ]\n}"
+        }
+      },
+      {
+        "json": {
+          "content": "{\n  \"file_id\": \"1FwxmHgst05TlDssi6Y-s9RC-YsEA4rFX_file_name_SHOPEE-ORDER_page21.json\",\n  \"shipping_company\": \"BEST EXPRESS\",\n  \"shopee_order_no\": \"25072538S243UC\",\n  \"product_name_thai\": [\n    \"Kefva ชั้นตะกร้ามินิการ์ตูน 3-5 ชั้น หน้าตัวยิ้ม มีล้อ กว้าง 58 cm รุ่น Pony แบบโครง เชสีฟ้างาขาวขาวนม สินค้าบิดเคล็ด\"\n  ]\n}"
+        }
+      },
+      {
+        "json": {
+          "content": "{\n  \"file_id\": \"1CKoRH0E0MYjt4I7BXoJV750lAcr5Kbxq_file_name_SHOPEE-ORDER_page22.json\",\n  \"shipping_company\": \"SPX EXPRESS\",\n  \"shopee_order_no\": \"250429HNGP417D\",\n  \"product_name_thai\": [\n    \"Kefva ตะแกรงแบ่งช่องสินค้า ตะแกรงวางน้ำยาปรับผ้านุ่ม ขนาด35x26x21cm ตะแกรงวางสินค้า ตะแกรงจัดระเบียบบนชั้น\"\n  ]\n}"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        []
+      ]
+    },
+    "Search files and folders": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "search_packing_list",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "search_orders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "merge_extract_from_file",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Merge7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file1": {
+      "main": [
+        [
+          {
+            "node": "PDF Separation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload a file": {
+      "main": [
+        [
+          {
+            "node": "Get signed URL",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get signed URL": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get OCR results": {
+      "main": [
+        [
+          {
+            "node": "OCR with image",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Check Duplicate Orders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OCR with image": {
+      "main": [
+        []
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Get OCR results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PDFco Api1": {
+      "main": [
+        [
+          {
+            "node": "Analyze image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze image": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Download file1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Merge6",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Merge8",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "group similar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file2": {
+      "main": [
+        []
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "JSON Formatter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google AI Doc": {
+      "main": [
+        []
+      ]
+    },
+    "JSON Formatter": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PDF Separation": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google AI Doc2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "gpt json formatter1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gpt json formatter1": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge3": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google AI Doc1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model2": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file3": {
+      "main": [
+        [
+          {
+            "node": "Google AI Doc1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "get_today_orders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "check_if_sheet_exist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_today_orders": {
+      "main": [
+        [
+          {
+            "node": "filter_vat_from_today_orders",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "filter_non_vat_from_today_orders",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "limit_last_vat": {
+      "main": [
+        [
+          {
+            "node": "generate_vat_job_no",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "generate_vat_job_no": {
+      "main": [
+        [
+          {
+            "node": "append_vat_order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "limit_last_not_vat": {
+      "main": [
+        [
+          {
+            "node": "generate_no_vat_job_no",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "generate_no_vat_job_no": {
+      "main": [
+        [
+          {
+            "node": "append_no_vat_order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Form": {
+      "main": [
+        [
+          {
+            "node": "generate_no_vat_job_no_from_other_sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check_if_new_sheet": {
+      "main": [
+        [
+          {
+            "node": "Form",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "limit_last_not_vat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "append_vat_order": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "filter_vat_from_existing_orders": {
+      "main": [
+        [
+          {
+            "node": "limit_last_vat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filter_vat_from_today_orders": {
+      "main": [
+        [
+          {
+            "node": "get_existing_orders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "generate_no_vat_job_no_from_other_sheet": {
+      "main": [
+        [
+          {
+            "node": "append_no_vat_order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_existing_orders": {
+      "main": [
+        [
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If_vat_in_today",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filter_is_not_vat_existing_orders": {
+      "main": [
+        [
+          {
+            "node": "check_if_new_sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "limit_last_not_vat1": {
+      "main": [
+        [
+          {
+            "node": "generate_no_vat_job_no1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "generate_no_vat_job_no1": {
+      "main": [
+        [
+          {
+            "node": "append_no_vat_order1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Form1": {
+      "main": [
+        [
+          {
+            "node": "generate_no_vat_job_no_from_other_sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "generate_no_vat_job_no_from_other_sheet1": {
+      "main": [
+        [
+          {
+            "node": "append_no_vat_order1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check_if_new_sheet1": {
+      "main": [
+        [
+          {
+            "node": "Form1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "limit_last_not_vat1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filter_is_not_vat_existing_orders1": {
+      "main": [
+        [
+          {
+            "node": "check_if_new_sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_existing_orders1": {
+      "main": [
+        [
+          {
+            "node": "filter_is_not_vat_existing_orders1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "is_no_vat_in_today_orders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filter_non_vat_from_today_orders": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "is_no_vat_in_today_orders": {
+      "main": [
+        [
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge4": {
+      "main": [
+        [
+          {
+            "node": "filter_is_not_vat_existing_orders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If_vat_in_today": {
+      "main": [
+        [
+          {
+            "node": "filter_vat_from_existing_orders",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "search_packing_list": {
+      "main": [
+        [
+          {
+            "node": "Filter2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search_orders": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "append_no_vat_order": {
+      "main": [
+        [
+          {
+            "node": "final_approve",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "final_approve": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "get_existing_orders2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_existing_orders2": {
+      "main": [
+        [
+          {
+            "node": "Merge5",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge5": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "sorting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge6": {
+      "main": [
+        [
+          {
+            "node": "add_text_pdf",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "merge_pdf",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "sorting": {
+      "main": [
+        [
+          {
+            "node": "Merge6",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge7",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "add_text_pdf": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code5": {
+      "main": [
+        [
+          {
+            "node": "Filter1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge7": {
+      "main": [
+        [
+          {
+            "node": "Code5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PDFco Api2": {
+      "main": [
+        [
+          {
+            "node": "Aggregate1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter1": {
+      "main": [
+        [
+          {
+            "node": "PDFco Api2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate1": {
+      "main": [
+        [
+          {
+            "node": "merge_pdf1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "merge_pdf1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "upload_bom_with_job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "upload_orders_with_job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "merge_pdf": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search_previous_files_in_process": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete a file2": {
+      "main": [
+        [
+          {
+            "node": "Clear sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear sheet": {
+      "main": [
+        [
+          {
+            "node": "search_previous_files_in_process_packing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Delete a file2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Clear sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PDF Separation1": {
+      "main": [
+        [
+          {
+            "node": "Upload file1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter2": {
+      "main": [
+        [
+          {
+            "node": "Download file4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file4": {
+      "main": [
+        [
+          {
+            "node": "PDF Separation1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file1": {
+      "main": [
+        [
+          {
+            "node": "merge_extract_from_file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        []
+      ]
+    },
+    "Anthropic Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Delete a file3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Search files and folders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search_previous_files_in_process_packing": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete a file3": {
+      "main": [
+        [
+          {
+            "node": "Search files and folders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google AI Doc2": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "exe_upload_gdrive": {
+      "main": [
+        []
+      ]
+    },
+    "merge_extract_from_file": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge8": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check_if_sheet_exist": {
+      "main": [
+        [
+          {
+            "node": "search_previous_files_in_process",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d936a9cc-b0a2-457a-b694-b0d56d0ae2d6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "89e6ad26cd4b9ff3f60727d93ec82b7c2c14466d50725ba4640cdbef72180efa"
+  },
+  "id": "jI6LEiRe6HFYx3wf",
+  "tags": []
+}

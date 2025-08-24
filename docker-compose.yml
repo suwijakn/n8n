@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  n8n:
+    build: .
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - WEBHOOK_URL=http://localhost:5678/
+      - TZ=Asia/Bangkok
+      - NODE_FUNCTION_ALLOW_EXTERNAL=pdf-lib,@google-cloud/documentai,fast-levenshtein
+      - GOOGLE_APPLICATION_CREDENTIALS=/secrets/gcp-sa.json
+      - NODE_PATH=/usr/local/lib/node_modules
+
+    volumes:
+      # persist n8n data (credentials/workflows)
+      - n8n_data:/home/node/.n8n
+      # mount your SA key (your folder structure shows ./credentials/…)
+      - ./credentials/n8n-doc-464814-72bb46a5a0ea.json:/secrets/gcp-sa.json:ro
+
+volumes:
+  n8n_data: {}   # <-- mapping (key: {}), not a list
