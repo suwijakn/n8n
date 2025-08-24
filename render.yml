@@ -1,0 +1,43 @@
+# render.yaml
+services:
+  - type: web
+    name: n8n
+    env: docker
+    plan: starter        # choose a plan; starter is fine to begin
+    autoDeploy: true
+    dockerfilePath: ./Dockerfile
+
+    # Render assigns $PORT; n8n should bind to it
+    envVars:
+      - key: N8N_PORT
+        value: ${PORT}
+      - key: N8N_PROTOCOL
+        value: https
+      # Replace with your actual Render URL once created (or leave a placeholder and update after first deploy)
+      - key: N8N_HOST
+        value: your-service-name.onrender.com
+      - key: WEBHOOK_URL
+        value: https://your-service-name.onrender.com/
+      - key: N8N_EDITOR_BASE_URL
+        value: https://your-service-name.onrender.com/
+      # Security: generate once and keep; changing it invalidates stored creds
+      - key: N8N_ENCRYPTION_KEY
+        generateValue: true
+
+      # Your Code node external libs and Node path
+      - key: NODE_FUNCTION_ALLOW_EXTERNAL
+        value: pdf-lib,@google-cloud/documentai,fast-levenshtein
+      - key: NODE_PATH
+        value: /usr/local/lib/node_modules
+      - key: TZ
+        value: Asia/Bangkok
+
+      # Point to the Secret File path you'll create in step 3
+      - key: GOOGLE_APPLICATION_CREDENTIALS
+        value: /etc/secrets/gcp-sa.json
+
+    # Persist n8n data (credentials, workflows)
+    disk:
+      name: n8n-data
+      mountPath: /home/node/.n8n
+      sizeGB: 10
