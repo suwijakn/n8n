@@ -20,19 +20,19 @@ services:
       - key: N8N_ENCRYPTION_KEY
         generateValue: true
 
-      # EXACT names; no spaces
+      # Make sure they exactly match those in Dockerfile
       - key: NODE_FUNCTION_ALLOW_EXTERNAL
         value: pdf-lib,@google-cloud/documentai,fast-levenshtein
       - key: NODE_PATH
         value: /usr/local/lib/node_modules
       - key: TZ
         value: Asia/Bangkok
-
-      - key: GOOGLE_APPLICATION_CREDENTIALS
-        value: /etc/secrets/gcp-sa.json
-
       - key: N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS
         value: true
+
+      # If you upload your SA key as a secret file
+      - key: GOOGLE_APPLICATION_CREDENTIALS
+        value: /secrets/gcp-sa.json
 
     disk:
       name: n8n-data

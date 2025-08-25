@@ -1,25 +1,23 @@
-# Dockerfile — n8n on Render with Code-node externals
-
+# Dockerfile
 FROM n8nio/n8n:latest
 
+# Switch to root to install global packages
 USER root
-ENV NPM_CONFIG_PREFIX=/usr/local
 
-# 1) Install globally (optional but nice for debugging)
-RUN npm install -g @google-cloud/documentai pdf-lib fast-levenshtein \
- && ls -la /usr/local/lib/node_modules
+# Create secrets dir
+RUN mkdir -p /secrets && chown -R node:node /secrets
 
-# 2) ALSO install INSIDE the n8n package dir so vm2 resolves them for the Code node
-#    --no-save avoids touching n8n’s package.json (pnpm-managed)
-RUN npm install --no-save --omit=dev --no-audit --no-fund \
-    --prefix /usr/local/lib/node_modules/n8n \
-    @google-cloud/documentai pdf-lib fast-levenshtein \
- && ls -la /usr/local/lib/node_modules/n8n/node_modules/@google-cloud || true \
- && ls -la /usr/local/lib/node_modules/n8n/node_modules/pdf-lib || true
+# Install required external modules globally
+RUN npm install -g \
+    pdf-lib \
+    @google-cloud/documentai \
+    fast-levenshtein
 
-# Drop privileges
-USER node
-
-# Optional: still expose globals; set timezone
+# Grant access to global node_modules from within n8n's vm2 sandbox
 ENV NODE_PATH=/usr/local/lib/node_modules \
-    TZ="Asia/Bangkok"
+    NODE_FUNCTION_ALLOW_EXTERNAL=pdf-lib,@google-cloud/documentai,fast-levenshtein \
+    GOOGLE_APPLICATION_CREDENTIALS=/secrets/gcp-sa.json \
+    TZ=Asia/Bangkok
+
+# Drop back to node user for security
+USER node
