@@ -1,30 +1,23 @@
 # Dockerfile
 FROM n8nio/n8n:latest
 
-# Switch to root to install global modules and setup
+# Switch to root to install global packages
 USER root
 
-# Create secrets directory
+# Create secrets dir
 RUN mkdir -p /secrets && chown -R node:node /secrets
 
-# Install external libraries globally
+# Install required external modules globally
 RUN npm install -g \
     pdf-lib \
     @google-cloud/documentai \
     fast-levenshtein
 
-# Set environment variables needed for Code node
+# Grant access to global node_modules from within n8n's vm2 sandbox
 ENV NODE_PATH=/usr/local/lib/node_modules \
     NODE_FUNCTION_ALLOW_EXTERNAL=pdf-lib,@google-cloud/documentai,fast-levenshtein \
     GOOGLE_APPLICATION_CREDENTIALS=/secrets/gcp-sa.json \
     TZ=Asia/Bangkok
 
-# Copy the custom start script
-COPY start.sh /usr/local/bin/start.sh
-RUN chmod +x /usr/local/bin/start.sh
-
-# Switch back to node user
+# Drop back to node user for security
 USER node
-
-ENTRYPOINT ["/usr/local/bin/start.sh"]
-
