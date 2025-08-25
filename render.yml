@@ -1,5 +1,3 @@
-# render.yaml — Blueprint spec for Render
-
 services:
   - type: web
     name: n8n
@@ -9,40 +7,30 @@ services:
     dockerfilePath: ./Dockerfile
 
     envVars:
-      # Bind n8n to Render's provided port
       - key: N8N_PORT
         value: ${PORT}
       - key: N8N_PROTOCOL
         value: https
-
-      # Replace with your real Render hostname
       - key: N8N_HOST
         value: n8n-bqay.onrender.com
       - key: WEBHOOK_URL
         value: https://n8n-bqay.onrender.com/
       - key: N8N_EDITOR_BASE_URL
         value: https://n8n-bqay.onrender.com/
-
-      # Persisted encryption key
       - key: N8N_ENCRYPTION_KEY
         generateValue: true
 
-      # Code node allow-list (exact names; no spaces)
+      # EXACT names; no spaces
       - key: NODE_FUNCTION_ALLOW_EXTERNAL
         value: pdf-lib,@google-cloud/documentai,fast-levenshtein
-
-      # Also expose global path (nice-to-have)
       - key: NODE_PATH
         value: /usr/local/lib/node_modules
-
       - key: TZ
         value: Asia/Bangkok
 
-      # Your Render Secret File path for GCP SA
       - key: GOOGLE_APPLICATION_CREDENTIALS
         value: /etc/secrets/gcp-sa.json
 
-      # Quiet the "config permissions too wide" warning safely
       - key: N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS
         value: true
 
