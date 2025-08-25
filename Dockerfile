@@ -26,5 +26,5 @@ RUN chmod +x /usr/local/bin/start.sh
 # Switch back to node user
 USER node
 
-# Run the script using absolute path
-CMD ["/usr/local/bin/start.sh"]
+ENTRYPOINT ["/usr/local/bin/start.sh"]
+
