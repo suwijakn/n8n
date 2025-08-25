@@ -7,30 +7,31 @@ services:
     dockerfilePath: ./Dockerfile
 
     envVars:
+      # make n8n listen on Render's port
       - key: N8N_PORT
-        value: 443
-      - key: N8N_PROTOCOL
-        value: https
+        value: ${PORT}
+
+      # public URL settings (used to build the OAuth Redirect URL)
       - key: N8N_HOST
         value: n8n-bqay.onrender.com
+      - key: N8N_PROTOCOL
+        value: https
       - key: WEBHOOK_URL
-        value: https://n8n-bqay.onrender.com/
+        value: https://n8n-bqay.onrender.com
       - key: N8N_EDITOR_BASE_URL
-        value: https://n8n-bqay.onrender.com/
-      - key: N8N_ENCRYPTION_KEY
-        generateValue: true
+        value: https://n8n-bqay.onrender.com
+      - key: N8N_SECURE_COOKIE
+        value: "true"
 
-      # Make sure they exactly match those in Dockerfile
+      # your existing ones (fine to keep)
       - key: NODE_FUNCTION_ALLOW_EXTERNAL
         value: pdf-lib,@google-cloud/documentai,fast-levenshtein
       - key: NODE_PATH
         value: /usr/local/lib/node_modules
       - key: TZ
         value: Asia/Bangkok
-      - key: N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS
-        value: true
-
-      # If you upload your SA key as a secret file
+      - key: N8N_ENCRYPTION_KEY
+        generateValue: true
       - key: GOOGLE_APPLICATION_CREDENTIALS
         value: /secrets/gcp-sa.json
 
