@@ -33,7 +33,7 @@ services:
 
       # --- Memory controls & execution data pruning ---
       - key: NODE_OPTIONS
-        value: --max-old-space-size=1024   # adjust to your instance RAM (e.g., 512/768/1024)
+        value: --max-old-space-size=512   # adjust to your instance RAM (e.g., 512/768/1024)
       - key: EXECUTIONS_DATA_SAVE_ON_SUCCESS
         value: none
       - key: EXECUTIONS_DATA_SAVE_ON_ERROR
