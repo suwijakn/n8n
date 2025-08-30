@@ -1,68 +1,40 @@
-# render.yaml — n8n on Render (Docker, with disk + memory tuning)
-
 services:
   - type: web
-    name: n8n-suwijak
+    name: n8n
     env: docker
     plan: starter
     autoDeploy: true
     dockerfilePath: ./Dockerfile
 
     envVars:
-      # --- Render port binding ---
+      # make n8n listen on Render's port
       - key: N8N_PORT
         value: ${PORT}
-      - key: N8N_PROTOCOL
-        value: https
 
-      # --- Public URL (must match your actual host or custom domain) ---
+      # public URL settings (used to build the OAuth Redirect URL)
       - key: N8N_HOST
         value: n8n-exj2.onrender.com
+      - key: N8N_PROTOCOL
+        value: https
       - key: WEBHOOK_URL
         value: https://n8n-exj2.onrender.com
       - key: N8N_EDITOR_BASE_URL
         value: https://n8n-exj2.onrender.com
-
-      # --- Security / persistence ---
       - key: N8N_SECURE_COOKIE
         value: "true"
-      - key: N8N_ENCRYPTION_KEY
-        generateValue: true
-      - key: N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS
-        value: "true"
 
-      # --- Memory controls & execution data pruning ---
-      - key: NODE_OPTIONS
-        value: --max-old-space-size=512   # adjust to your instance RAM (e.g., 512/768/1024)
-      - key: EXECUTIONS_DATA_SAVE_ON_SUCCESS
-        value: none
-      - key: EXECUTIONS_DATA_SAVE_ON_ERROR
-        value: none
-      - key: EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS
-        value: none
-      - key: EXECUTIONS_DATA_PRUNE
-        value: "true"
-
-      # --- Binary data on disk (uses the disk mounted below) ---
-      - key: N8N_DEFAULT_BINARY_DATA_MODE
-        value: filesystem
-
-      # --- Code node external packages (must also be installed in the image) ---
+      # your existing ones (fine to keep)
       - key: NODE_FUNCTION_ALLOW_EXTERNAL
         value: pdf-lib,@google-cloud/documentai,fast-levenshtein
       - key: NODE_PATH
         value: /usr/local/lib/node_modules
-
-      # --- Timezone ---
       - key: TZ
         value: Asia/Bangkok
-
-      # --- Google creds (create a Secret File named gcp-sa.json) ---
-      # Render mounts Secret Files at /etc/secrets/<filename>
+      - key: N8N_ENCRYPTION_KEY
+        generateValue: true
       - key: GOOGLE_APPLICATION_CREDENTIALS
         value: /etc/secrets/gcp-sa.json
 
-    # Persist n8n data (credentials, workflows, filesystem binaries)
     disk:
       name: n8n-data
       mountPath: /home/node/.n8n
