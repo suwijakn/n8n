@@ -1,18 +1,22 @@
-FROM node:20-alpine AS builder
-
-WORKDIR /app
-RUN npm init -y
-RUN npm install pdf-lib @google-cloud/documentai fast-levenshtein
-
-
 FROM n8nio/n8n:latest
 
 USER root
 
-# copy only node_modules from builder
-COPY --from=builder /app/node_modules /usr/local/lib/node_modules/n8n/node_modules
+# create custom extensions directory
+RUN mkdir -p /home/node/.n8n/custom
+WORKDIR /home/node/.n8n/custom
+
+# init local package
+RUN npm init -y
+
+# install external libs here
+RUN npm install pdf-lib @google-cloud/documentai fast-levenshtein
+
+# fix permission
+RUN chown -R node:node /home/node/.n8n
 
 ENV NODE_FUNCTION_ALLOW_EXTERNAL=pdf-lib,@google-cloud/documentai,fast-levenshtein \
+    N8N_CUSTOM_EXTENSIONS=/home/node/.n8n/custom \
     TZ=Asia/Bangkok
 
 USER node
