@@ -33,6 +33,9 @@ services:
       - key: GOOGLE_APPLICATION_CREDENTIALS
         value: /etc/secrets/gcp-sa.json
 
+      - key: N8N_USE_SANDBOX
+        value: "false"
+
     disk:
       name: n8n-data
       mountPath: /home/node/.n8n
