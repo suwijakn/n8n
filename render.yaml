@@ -25,7 +25,7 @@ services:
 
       # your existing ones (fine to keep)
       - key: NODE_FUNCTION_ALLOW_EXTERNAL
-        value: pdf-lib,@google-cloud/documentai,fast-levenshtein
+        value: pdf-lib,googleapis,fast-levenshtein
       - key: TZ
         value: Asia/Bangkok
       - key: N8N_ENCRYPTION_KEY
