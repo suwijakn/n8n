@@ -1,17 +1,20 @@
 FROM n8nio/n8n:latest
 
-# Switch to root to install packages
+# Switch to root to create a dedicated directory for custom modules and set permissions
 USER root
+RUN mkdir /custom-modules && chown node:node /custom-modules
 
-# Change working directory to where NODE_PATH expects the modules
-WORKDIR /usr/local/lib
+# Switch back to the unprivileged 'node' user
+USER node
 
-# Install packages locally (without -g) so they are placed directly in /usr/local/lib/node_modules without symlinks
+# Change to the new directory
+WORKDIR /custom-modules
+
+# Install packages locally. This creates /custom-modules/node_modules safely
 RUN npm install pdf-lib @google-cloud/documentai fast-levenshtein
 
-# Set NODE_PATH so the n8n task runner can locate the modules
-ENV NODE_PATH=/usr/local/lib/node_modules
+# Set NODE_PATH so the n8n task runner can locate these modules
+ENV NODE_PATH=/custom-modules/node_modules
 
-# Switch back to the n8n default directory and user for security
+# Switch back to the n8n default directory
 WORKDIR /home/node
-USER node
