@@ -1,16 +1,24 @@
+# Dockerfile
 FROM n8nio/n8n:latest
 
+# Switch to root to install global packages
 USER root
 
-RUN mkdir -p /data/custom_modules
-WORKDIR /data/custom_modules
+# Create secrets dir
+RUN mkdir -p /secrets && chown -R node:node /secrets
 
-RUN npm init -y
-RUN npm install pdf-lib @google-cloud/documentai fast-levenshtein
+# Install required external modules globally
+RUN npm install -g \
+    pdf-lib \
+    @google-cloud/documentai \
+    fast-levenshtein
 
-ENV NODE_PATH=/data/custom_modules/node_modules \
+# Grant access to global node_modules from within n8n's vm2 sandbox
+ENV NODE_PATH=/usr/local/lib/node_modules \
     NODE_FUNCTION_ALLOW_EXTERNAL=pdf-lib,@google-cloud/documentai,fast-levenshtein \
-    N8N_RUNNERS_ENABLED=false \
+
+    GOOGLE_APPLICATION_CREDENTIALS=/secrets/gcp-sa.json \
     TZ=Asia/Bangkok
 
+# Drop back to node user for security
 USER node
