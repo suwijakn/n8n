@@ -27,7 +27,7 @@ services:
       - key: NODE_FUNCTION_ALLOW_EXTERNAL
         value: pdf-lib,@google-cloud/documentai,fast-levenshtein
       - key: NODE_PATH
-        value: /usr/local/lib/node_modules
+        value: /custom-modules/node_modules
       - key: TZ
         value: Asia/Bangkok
       - key: N8N_ENCRYPTION_KEY
