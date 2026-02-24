@@ -1,5 +1,5 @@
 # Dockerfile
-FROM n8nio/n8n:1.69.0
+FROM n8nio/n8n:latest
 
 # Switch to root to install global packages
 USER root
