@@ -1,24 +1,27 @@
-# Dockerfile
 FROM n8nio/n8n:latest
 
-# Switch to root to install global packages
 USER root
 
-# Create secrets dir
+# Create secrets dir (Render standard is usually /etc/secrets, but keeping this if you use it locally)
 RUN mkdir -p /secrets && chown -R node:node /secrets
 
-# Install required external modules globally
-RUN npm install -g \
-    pdf-lib \
-    @google-cloud/documentai \
-    fast-levenshtein
+# Create a dedicated directory for custom modules to avoid global path conflicts
+RUN mkdir -p /custom-modules && chown -R node:node /custom-modules
 
-# Grant access to global node_modules from within n8n's vm2 sandbox
-ENV NODE_PATH=/usr/local/lib/node_modules \
-    NODE_FUNCTION_ALLOW_EXTERNAL=pdf-lib,@google-cloud/documentai,fast-levenshtein \
-
-    GOOGLE_APPLICATION_CREDENTIALS=/secrets/gcp-sa.json \
-    TZ=Asia/Bangkok
-
-# Drop back to node user for security
+# Switch to node user to install packages safely
 USER node
+
+# Install required external modules locally in the custom directory
+WORKDIR /custom-modules
+RUN npm install pdf-lib @google-cloud/documentai fast-levenshtein
+
+# Switch WORKDIR back to the default n8n directory
+WORKDIR /home/node
+
+# Set environment variables in Docker
+# (No blank lines between trailing slashes!)
+ENV NODE_PATH=/custom-modules/node_modules \
+    NODE_FUNCTION_ALLOW_EXTERNAL=pdf-lib,@google-cloud/documentai,fast-levenshtein \
+    NODE_FUNCTION_ALLOW_BUILTIN=* \
+    GOOGLE_APPLICATION_CREDENTIALS=/etc/secrets/gcp-sa.json \
+    TZ=Asia/Bangkok
